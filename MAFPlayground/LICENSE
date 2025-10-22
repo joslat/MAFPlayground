@@ -1,0 +1,113 @@
+MAFPlayground Public License — No Presentational Use 1.0 (Swiss)
+SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
+
+Copyright (c) 2025 Jose Luis Latorre
+
+1. Definitions
+   “Software” means the MAFPlayground repository and all code files within it.
+   “You” means the licensee.
+   “Presentational Use” means use of the Software or substantial portions of it
+   in public speaking, conference talks, keynotes, trainings, workshops, courses,
+   classroom instruction, tutorials (live or recorded), books, or similar
+   instructional or publication contexts, including showing, projecting, or
+   distributing code or binaries as part of those activities.
+   “Derivative Work” means any work based on or incorporating the Software.
+
+2. Grant of Rights
+   Subject to the terms below, the Licensor grants You a worldwide, royalty-free,
+   non-exclusive, non-transferable, revocable license to:
+     a) use, reproduce, and modify the Software;
+     b) create Derivative Works; and
+     c) distribute the Software or Derivative Works in source or binary form,
+   provided You comply with Sections 3–7.
+
+3. Allowed Private / Internal Use (clarification)
+   Private, non-public use is permitted, including:
+     • self-learning, experimentation, and evaluation; and
+     • internal use within an organization by its staff,
+   so long as such use is not a Presentational Use as defined above.
+
+4. Attribution
+   All copies and substantial portions must retain:
+     (i) this License text,
+     (ii) the copyright notice above, and
+     (iii) a NOTICE file referencing “MAFPlayground by Jose Luis Latorre”
+          with a link to the original repository.
+
+5. Presentational Use Prohibition
+   Presentational Use is NOT permitted without the Licensor’s prior written
+   permission. This restriction also applies to Derivative Works.
+
+6. Redistribution Conditions
+   Any redistribution of the Software or Derivative Works must:
+     • include this License in full;
+     • preserve the Presentational Use prohibition in terms at least as
+       protective as Sections 1 and 5; and
+     • clearly identify any modifications made.
+
+7. No Trademark or Endorsement
+   This license does not grant any rights to use the Licensor’s names, logos,
+   or trademarks, nor does it imply endorsement.
+
+8. Disclaimer of Warranty and Costs
+   THE SOFTWARE IS PROVIDED “AS IS” AND “AS AVAILABLE”. IT MAY CONTAIN
+   EXPERIMENTAL SAMPLES THAT DO NOT WORK OR THAT CAN CAUSE LOOPS INCURRING
+   CLOUD OR API COSTS. YOU USE IT AT YOUR OWN RISK. NO WARRANTY, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO MERCHANTABILITY, FITNESS FOR A
+   PARTICULAR PURPOSE, NON-INFRINGEMENT, OR ACCURACY, IS PROVIDED.
+
+9. Limitation of Liability
+   TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL THE LICENSOR BE
+   LIABLE FOR ANY DAMAGES OR COSTS OF ANY KIND (INCLUDING DIRECT, INDIRECT,
+   INCIDENTAL, SPECIAL, EXEMPLARY, CONSEQUENTIAL, OR SIMILAR DAMAGES), OR FOR
+   FEES AND CHARGES INCURRED BY LOOPS OR MISUSE, ARISING FROM OR RELATED TO
+   THE SOFTWARE OR THIS LICENSE, EVEN IF ADVISED OF THE POSSIBILITY.
+
+10. Termination
+   This license terminates automatically if You breach its terms. Upon
+   termination, You must cease use and distribution of the Software and any
+   Derivative Works. Rights previously granted to recipients of Your compliant
+   distributions survive.
+
+11. Governing Law and Venue
+   This License shall be governed by the substantive laws of Switzerland,
+   excluding its conflict-of-laws rules and the UN Convention on Contracts for
+   the International Sale of Goods. The courts of Zürich, Switzerland, shall
+   have exclusive jurisdiction, subject to any compulsory statutory venues.
+
+12. Miscellaneous
+   If any provision is held unenforceable, the remaining provisions remain in
+   full force. No term is waived unless in a written instrument signed by the
+   Licensor.
+
+13. Dual-Licensing of Certain Files
+
+13.1 Default License. Unless expressly stated otherwise, all files in this
+     repository are licensed under the MAFPlayground Public License — No
+     Presentational Use 1.0 (Swiss) (SPDX: LicenseRef-MAFPlayground-NPU-1.0-CH).
+
+13.2 MIT Dual-License (Per-File). Specific files MAY be dual-licensed under
+     the MIT License in addition to the above. A file is dual-licensed ONLY if:
+       (a) its file header contains an SPDX expression exactly:
+           “LicenseRef-MAFPlayground-NPU-1.0-CH OR MIT”, or
+       (b) the file path appears in DUAL-LICENSED-FILES.md with “OR MIT”.
+
+13.3 Scope. Dual-licensing applies solely to the identified files (and only
+     to content originally authored by Jose Luis Latorre). It does not extend
+     to other files, directories, or third-party components.
+
+13.4 Redistribution Under MIT. For any file covered by 13.2, You may copy and
+     redistribute that file under the MIT License. When contributed to an MIT
+     repository, that copy is governed by MIT in that repository. This does not
+     change the licensing of other files here.
+
+13.5 Provenance. When practical, please preserve a provenance comment or PR
+     note linking back to the original file/commit in this repository.
+
+13.6 No Implied Dual-License. Absence of (a) or (b) above means the file is
+     NOT dual-licensed and remains solely under LicenseRef-MAFPlayground-NPU-1.0-CH.
+
+Permission requests for Presentational Use:
+   Email: joslat@gmail.com
+Licensor:
+   Jose Luis Latorre

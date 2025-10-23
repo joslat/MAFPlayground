@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
-// Copyright (c) 2025 Jose Luis Latorre
+// Copyright (c) Microsoft. All rights reserved.
+// SPDX-License-Identifier: MIT
 
 using Azure.AI.OpenAI;
 using Azure.Identity;

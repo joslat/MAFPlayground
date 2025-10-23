@@ -1,5 +1,6 @@
 ﻿// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH OR MIT
 // Copyright (c) 2025 Jose Luis Latorre
+// Note: this demo has been ported to the Microsoft Agent Framework from here and you can find it as a sample.
 
 using Azure.AI.OpenAI;
 using MAFPlayground.Utils;

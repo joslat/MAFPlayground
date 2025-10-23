@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft. All rights reserved.
+// SPDX-License-Identifier: MIT
+
 using System.ComponentModel;
 using System.Text.Json;
 using System.Text.Json.Serialization;

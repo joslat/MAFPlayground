@@ -1,4 +1,7 @@
-﻿using Azure.AI.OpenAI;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// SPDX-License-Identifier: MIT
+
+using Azure.AI.OpenAI;
 using Azure.Identity;
 using Microsoft.Agents.AI;
 using OpenAI;

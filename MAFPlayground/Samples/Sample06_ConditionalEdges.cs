@@ -1,4 +1,7 @@
-﻿using Azure.AI.OpenAI;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// SPDX-License-Identifier: MIT
+
+using Azure.AI.OpenAI;
 using MAFPlayground.Utils;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Workflows;

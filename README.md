@@ -63,23 +63,9 @@ Some files are explicitly marked with this SPDX header to allow contribution to 
 // Copyright (c) 2025 Jose Luis Latorre
 ```
 
-Only files with that header (or listed in `DUAL-LICENSED-FILES.md`) are dual-licensed. Everything else remains under `LicenseRef-MAFPlayground-NPU-1.0-CH`.
-
----
-
-## Porting to MIT repos (e.g., microsoft/agent-framework)
-
-When contributing a sample from this repo to an MIT repository:
-
-1. Ensure the source file here is dual-licensed (`… OR MIT` SPDX).
-2. In the destination repo, follow its header policy (e.g., might require **only**):
-   ```txt
-   // Copyright (c) Microsoft. All rights reserved.
-   ```
-3. In your PR description, include provenance:
-   - Original author: **Jose Luis Latorre**
-   - Source link to the file/commit in this repo
-   - Statement that the contribution is under the destination’s **MIT** license with no extra terms.
+This is due that some samples-demos have been ported to the **microsoft/agent-framework** repository (MIT license) as examples.
+Only files with that header are dual-licensed. 
+Everything else remains under `LicenseRef-MAFPlayground-NPU-1.0-CH`.
 
 ---
 

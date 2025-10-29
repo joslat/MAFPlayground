@@ -30,9 +30,12 @@ Console.WriteLine("Hello, Microsoft Agent Framework!");
 // DEMOS
 //await Demo01_BasicAgent.Execute();
 //await Demo02_SuperPoweredAssistant.Execute();
-await Demo03_ChatWithSuperPoweredAssistant.Execute();
+//await Demo03_ChatWithSuperPoweredAssistant.Execute();
 //await Demo04_WorkflowsBasicSequentialContentProduction.Execute();
 //await Sample14_SoftwareDevelopmentPipeline.Execute();
 //await Sample15_SoftwareDevelopmentPipelineWithSubWorkflows.Execute();
 //await Demo05_SubWorkflows.Execute();
 //await Demo07_MixedAgentsAndExecutors.Execute();
+
+//await Sample16_ChatWithWorkflow.Execute();
+await Sample17_WriterCriticIterationWorkflow.Execute();

@@ -39,4 +39,5 @@ Console.WriteLine("Hello, Microsoft Agent Framework!");
 
 //await Sample16_ChatWithWorkflow.Execute();
 //await Sample17_WriterCriticIterationWorkflow.Execute();
-await Sample18_WriterCriticAgentsOnly.Execute();
+//await Sample18_WriterCriticAgentsOnly.Execute();
+await Sample19_WriterCriticStructuredOutput.Execute();

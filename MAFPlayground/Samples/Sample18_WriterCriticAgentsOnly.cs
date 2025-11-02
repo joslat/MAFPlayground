@@ -152,14 +152,7 @@ internal static class Sample18_WriterCriticAgentsOnly
         Console.WriteLine("  ✓ Routing based on ChatMessage text content");
         Console.WriteLine("  ✓ Simpler implementation but less type-safe");
         Console.WriteLine($"  ✓ Max iteration cap ({MaxIterations}) enforced by Critic");
-        Console.WriteLine("  ✓ Alternative approach for agent-only scenarios\n");
-        
-        Console.WriteLine("Compare with Sample 17:");
-        Console.WriteLine("  • Sample 17: Type-safe with CriticDecision struct");
-        Console.WriteLine("  • Sample 18: Text-based routing (this sample)");
-        Console.WriteLine("  • Sample 17: Custom executors with state management");
-        Console.WriteLine("  • Sample 18: Pure agents with simpler flow\n");
-    }
+        Console.WriteLine("  ✓ Alternative approach for agent-only scenarios\n");    }
 
     // --------------------- Helper method ---------------------
     

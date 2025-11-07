@@ -40,7 +40,7 @@ internal static class Demo05_SubWorkflows
 
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> reverseFunc =
             async (text, ctx, ct) => string.Concat(text.Reverse());
-        var reverseExecutor = reverseFunc.AsExecutor("ReverseExecutor");
+        var reverseExecutor = reverseFunc.BindAsExecutor("ReverseExecutor");
 
 
         var uppercaseExecutor = new UppercaseExecutor();
@@ -59,7 +59,7 @@ internal static class Demo05_SubWorkflows
         // ISSUE: Why not do it identical to Python, with WorkflowExecutor that wraps a Workflow and exposes it as an Executor.
         // # wrap it as an executor
         // sub_exec = WorkflowExecutor(sub, id = "sub_workflow")
-        ExecutorIsh subWorkflowExecutor = subWorkflow.ConfigureSubWorkflow("subWorkflow");
+        ExecutorBinding subWorkflowExecutor = subWorkflow.ConfigureSubWorkflow("subWorkflow");
 
         // ====================================
         // Step 3: Build a main workflow that uses the sub-workflow 

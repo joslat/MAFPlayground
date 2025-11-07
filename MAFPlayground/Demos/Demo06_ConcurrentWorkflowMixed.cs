@@ -70,7 +70,7 @@ internal static class Demo06_ConcurrentWorkflowMixed
         //var workflow = builder.Build();
 
         // ISSUE: need fpr an explicit cast-conversion to Executor (ExecutorIsh)
-        //ExecutorIsh PhysicistExecutor = physicist.AsExecutor(Name : "Physicist_001", Description: "Description");
+        //ExecutorIsh PhysicistExecutor = physicist.BindAsExecutor(Name : "Physicist_001", Description: "Description");
 
         var workflow = new WorkflowBuilder(uppercase)
             .AddEdge(uppercase, reverse).WithOutputFrom(reverse)

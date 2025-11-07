@@ -66,9 +66,10 @@ internal static class Sample11_WorkflowAsAgentNested
             .AddEdge(reverseExecutor, postfixExecutor)
             .AddEdge(postfixExecutor, subOutputExecutor)
             .WithOutputFrom(subOutputExecutor)
-            .BuildAsync<List<ChatMessage>>();
+            .Build();
+            //.BuildAsync<List<ChatMessage>>();
 
-        var wrappedWorkflow = await wrappedWorkflowTask;
+        var wrappedWorkflow = wrappedWorkflowTask;
         WorkflowVisualizerTool.PrintAll(wrappedWorkflow, "Sub-Workflow (Text Transformation)");
 
         // ====================================

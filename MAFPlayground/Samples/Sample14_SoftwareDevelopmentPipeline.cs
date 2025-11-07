@@ -70,7 +70,7 @@ internal static class Sample14_SoftwareDevelopmentPipeline
                 Console.WriteLine("  → Requirements gathering complete");
                 return ValueTask.FromResult(result);
             };
-        var gatherRequirements = gatherRequirementsFunc.AsExecutor("GatherRequirements");
+        var gatherRequirements = gatherRequirementsFunc.BindAsExecutor("GatherRequirements");
 
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> riskAnalysisFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
@@ -79,7 +79,7 @@ internal static class Sample14_SoftwareDevelopmentPipeline
                 Console.WriteLine("  → Risk analysis complete");
                 return ValueTask.FromResult(result);
             };
-        var riskAnalysis = riskAnalysisFunc.AsExecutor("RiskAnalysis");
+        var riskAnalysis = riskAnalysisFunc.BindAsExecutor("RiskAnalysis");
 
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> feasibilityCheckFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
@@ -88,7 +88,7 @@ internal static class Sample14_SoftwareDevelopmentPipeline
                 Console.WriteLine("  → Feasibility check complete");
                 return ValueTask.FromResult(result);
             };
-        var feasibilityCheck = feasibilityCheckFunc.AsExecutor("FeasibilityCheck");
+        var feasibilityCheck = feasibilityCheckFunc.BindAsExecutor("FeasibilityCheck");
 
         // ====================================
         // Phase 2: SPECIFICATION (Sequential)
@@ -102,7 +102,7 @@ internal static class Sample14_SoftwareDevelopmentPipeline
                 Console.WriteLine("  → Technical specifications complete");
                 return ValueTask.FromResult(result);
             };
-        var technicalSpecs = technicalSpecsFunc.AsExecutor("TechnicalSpecs");
+        var technicalSpecs = technicalSpecsFunc.BindAsExecutor("TechnicalSpecs");
 
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> apiDesignFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
@@ -111,7 +111,7 @@ internal static class Sample14_SoftwareDevelopmentPipeline
                 Console.WriteLine("  → API design complete");
                 return ValueTask.FromResult(result);
             };
-        var apiDesign = apiDesignFunc.AsExecutor("APIDesign");
+        var apiDesign = apiDesignFunc.BindAsExecutor("APIDesign");
 
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> dataModelFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
@@ -120,7 +120,7 @@ internal static class Sample14_SoftwareDevelopmentPipeline
                 Console.WriteLine("  → Data model complete");
                 return ValueTask.FromResult(result);
             };
-        var dataModel = dataModelFunc.AsExecutor("DataModel");
+        var dataModel = dataModelFunc.BindAsExecutor("DataModel");
 
         // ====================================
         // Phase 3: EXPERT ASSESSMENT (Concurrent - Fan-out/Fan-in)
@@ -137,7 +137,7 @@ internal static class Sample14_SoftwareDevelopmentPipeline
                 Console.WriteLine("  → Security review complete");
                 return ValueTask.FromResult(result);
             };
-        var securityExpert = securityExpertFunc.AsExecutor("SecurityExpert");
+        var securityExpert = securityExpertFunc.BindAsExecutor("SecurityExpert");
 
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> performanceExpertFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
@@ -146,7 +146,7 @@ internal static class Sample14_SoftwareDevelopmentPipeline
                 Console.WriteLine("  → Performance review complete");
                 return ValueTask.FromResult(result);
             };
-        var performanceExpert = performanceExpertFunc.AsExecutor("PerformanceExpert");
+        var performanceExpert = performanceExpertFunc.BindAsExecutor("PerformanceExpert");
 
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> uxExpertFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
@@ -155,7 +155,7 @@ internal static class Sample14_SoftwareDevelopmentPipeline
                 Console.WriteLine("  → UX review complete");
                 return ValueTask.FromResult(result);
             };
-        var uxExpert = uxExpertFunc.AsExecutor("UXExpert");
+        var uxExpert = uxExpertFunc.BindAsExecutor("UXExpert");
 
         // Class-based aggregator (needs state to collect all expert reviews)
         var expertAggregator = new ExpertReviewAggregator(expectedCount: 3);
@@ -172,7 +172,7 @@ internal static class Sample14_SoftwareDevelopmentPipeline
                 Console.WriteLine("  → Coding complete");
                 return ValueTask.FromResult(result);
             };
-        var coding = codingFunc.AsExecutor("Coding");
+        var coding = codingFunc.BindAsExecutor("Coding");
 
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> unitTestsFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
@@ -181,7 +181,7 @@ internal static class Sample14_SoftwareDevelopmentPipeline
                 Console.WriteLine("  → Unit tests complete");
                 return ValueTask.FromResult(result);
             };
-        var unitTests = unitTestsFunc.AsExecutor("UnitTests");
+        var unitTests = unitTestsFunc.BindAsExecutor("UnitTests");
 
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> integrationTestsFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
@@ -190,7 +190,7 @@ internal static class Sample14_SoftwareDevelopmentPipeline
                 Console.WriteLine("  → Integration tests complete");
                 return ValueTask.FromResult(result);
             };
-        var integrationTests = integrationTestsFunc.AsExecutor("IntegrationTests");
+        var integrationTests = integrationTestsFunc.BindAsExecutor("IntegrationTests");
 
         // ====================================
         // Phase 5: QUALITY CONTROL (Conditional with Loop-back)
@@ -207,7 +207,7 @@ internal static class Sample14_SoftwareDevelopmentPipeline
                 Console.WriteLine("  → ✅ DEPLOYED TO PRODUCTION!");
                 return ValueTask.FromResult(result);
             };
-        var deployExecutor = deployFunc.AsExecutor("DeployToProduction");
+        var deployExecutor = deployFunc.BindAsExecutor("DeployToProduction");
 
         var rejectExecutor = new RejectionLoopBackExecutor();
 

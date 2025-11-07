@@ -52,7 +52,7 @@ internal static class Sample12D_CustomReviewWorkflow
         // ====================================
         Console.WriteLine("Building multi-reviewer workflow...\n");
 
-        var reviewWorkflow = await GetMultiReviewerWorkflowAsync(chatClient).ConfigureAwait(false);
+        var reviewWorkflow = GetMultiReviewerWorkflowAsync(chatClient);
         WorkflowVisualizerTool.PrintAll(reviewWorkflow, "Multi-Reviewer Workflow");
 
         // ====================================
@@ -174,7 +174,7 @@ Include facts that can be verified and maintain a professional writing style.")
     /// Builds a multi-reviewer workflow that fans out to specialist reviewers,
     /// aggregates their feedback, and synthesizes it through an editor.
     /// </summary>
-    private static ValueTask<Workflow<List<ChatMessage>>> GetMultiReviewerWorkflowAsync(IChatClient chatClient)
+    private static Workflow GetMultiReviewerWorkflowAsync(IChatClient chatClient)
     {
         // Create executors
         var startExecutor = new Sample12DReviewStartExecutor();
@@ -195,7 +195,8 @@ Include facts that can be verified and maintain a professional writing style.")
             .AddFanInEdge(aggregationExecutor, sources: [seoReviewer, piiReviewer, factChecker, styleReviewer])
             .AddEdge(aggregationExecutor, editorAgent)
             .WithOutputFrom(editorAgent)
-            .BuildAsync<List<ChatMessage>>();
+            .Build();
+            //.BuildAsync<List<ChatMessage>>();
     }
 
     // ====================================

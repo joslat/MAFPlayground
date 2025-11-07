@@ -137,7 +137,7 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
     /// <summary>
     /// Builds the Analysis Phase sub-workflow: Requirements → Risk → Feasibility
     /// </summary>
-    private static ExecutorIsh BuildAnalysisSubWorkflow()
+    private static ExecutorBinding BuildAnalysisSubWorkflow()
     {
         Console.WriteLine("Building ANALYSIS sub-workflow...");
 
@@ -148,7 +148,7 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
                 Console.WriteLine("  → Requirements gathering complete");
                 return ValueTask.FromResult(result);
             };
-        var gatherRequirements = gatherRequirementsFunc.AsExecutor("GatherRequirements");
+        var gatherRequirements = gatherRequirementsFunc.BindAsExecutor("GatherRequirements");
 
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> riskAnalysisFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
@@ -157,7 +157,7 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
                 Console.WriteLine("  → Risk analysis complete");
                 return ValueTask.FromResult(result);
             };
-        var riskAnalysis = riskAnalysisFunc.AsExecutor("RiskAnalysis");
+        var riskAnalysis = riskAnalysisFunc.BindAsExecutor("RiskAnalysis");
 
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> feasibilityCheckFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
@@ -166,7 +166,7 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
                 Console.WriteLine("  → Feasibility check complete");
                 return ValueTask.FromResult(result);
             };
-        var feasibilityCheck = feasibilityCheckFunc.AsExecutor("FeasibilityCheck");
+        var feasibilityCheck = feasibilityCheckFunc.BindAsExecutor("FeasibilityCheck");
 
         var workflow = new WorkflowBuilder(gatherRequirements)
             .AddEdge(gatherRequirements, riskAnalysis)
@@ -182,7 +182,7 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
     /// <summary>
     /// Builds the Specification Phase sub-workflow: Tech Specs → API Design → Data Model
     /// </summary>
-    private static ExecutorIsh BuildSpecificationSubWorkflow()
+    private static ExecutorBinding BuildSpecificationSubWorkflow()
     {
         Console.WriteLine("\nBuilding SPECIFICATION sub-workflow...");
 
@@ -193,7 +193,7 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
                 Console.WriteLine("  → Technical specifications complete");
                 return ValueTask.FromResult(result);
             };
-        var technicalSpecs = technicalSpecsFunc.AsExecutor("TechnicalSpecs");
+        var technicalSpecs = technicalSpecsFunc.BindAsExecutor("TechnicalSpecs");
 
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> apiDesignFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
@@ -202,7 +202,7 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
                 Console.WriteLine("  → API design complete");
                 return ValueTask.FromResult(result);
             };
-        var apiDesign = apiDesignFunc.AsExecutor("APIDesign");
+        var apiDesign = apiDesignFunc.BindAsExecutor("APIDesign");
 
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> dataModelFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
@@ -211,7 +211,7 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
                 Console.WriteLine("  → Data model complete");
                 return ValueTask.FromResult(result);
             };
-        var dataModel = dataModelFunc.AsExecutor("DataModel");
+        var dataModel = dataModelFunc.BindAsExecutor("DataModel");
 
         var workflow = new WorkflowBuilder(technicalSpecs)
             .AddEdge(technicalSpecs, apiDesign)
@@ -227,7 +227,7 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
     /// <summary>
     /// Builds the Expert Assessment Phase sub-workflow: Fan-out → Security/Performance/UX → Aggregator
     /// </summary>
-    private static ExecutorIsh BuildExpertAssessmentSubWorkflow()
+    private static ExecutorBinding BuildExpertAssessmentSubWorkflow()
     {
         Console.WriteLine("\nBuilding EXPERT ASSESSMENT sub-workflow (concurrent)...");
 
@@ -240,7 +240,7 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
                 Console.WriteLine("  → Security review complete");
                 return ValueTask.FromResult(result);
             };
-        var securityExpert = securityExpertFunc.AsExecutor("SecurityExpert");
+        var securityExpert = securityExpertFunc.BindAsExecutor("SecurityExpert");
 
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> performanceExpertFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
@@ -249,7 +249,7 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
                 Console.WriteLine("  → Performance review complete");
                 return ValueTask.FromResult(result);
             };
-        var performanceExpert = performanceExpertFunc.AsExecutor("PerformanceExpert");
+        var performanceExpert = performanceExpertFunc.BindAsExecutor("PerformanceExpert");
 
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> uxExpertFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
@@ -258,7 +258,7 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
                 Console.WriteLine("  → UX review complete");
                 return ValueTask.FromResult(result);
             };
-        var uxExpert = uxExpertFunc.AsExecutor("UXExpert");
+        var uxExpert = uxExpertFunc.BindAsExecutor("UXExpert");
 
         var expertAggregator = new ExpertReviewAggregator(expectedCount: 3);
 
@@ -276,7 +276,7 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
     /// <summary>
     /// Builds the Implementation Phase sub-workflow: Coding → Unit Tests → Integration Tests
     /// </summary>
-    private static ExecutorIsh BuildImplementationSubWorkflow()
+    private static ExecutorBinding BuildImplementationSubWorkflow()
     {
         Console.WriteLine("\nBuilding IMPLEMENTATION sub-workflow...");
 
@@ -287,7 +287,7 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
                 Console.WriteLine("  → Coding complete");
                 return ValueTask.FromResult(result);
             };
-        var coding = codingFunc.AsExecutor("Coding");
+        var coding = codingFunc.BindAsExecutor("Coding");
 
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> unitTestsFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
@@ -296,7 +296,7 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
                 Console.WriteLine("  → Unit tests complete");
                 return ValueTask.FromResult(result);
             };
-        var unitTests = unitTestsFunc.AsExecutor("UnitTests");
+        var unitTests = unitTestsFunc.BindAsExecutor("UnitTests");
 
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> integrationTestsFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
@@ -305,7 +305,7 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
                 Console.WriteLine("  → Integration tests complete");
                 return ValueTask.FromResult(result);
             };
-        var integrationTests = integrationTestsFunc.AsExecutor("IntegrationTests");
+        var integrationTests = integrationTestsFunc.BindAsExecutor("IntegrationTests");
 
         var workflow = new WorkflowBuilder(coding)
             .AddEdge(coding, unitTests)
@@ -321,7 +321,7 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
     /// <summary>
     /// Builds the Quality Control Phase sub-workflow: Just QC evaluation
     /// </summary>
-    private static ExecutorIsh BuildQualityControlSubWorkflow()
+    private static ExecutorBinding BuildQualityControlSubWorkflow()
     {
         Console.WriteLine("\nBuilding QUALITY CONTROL sub-workflow...");
 
@@ -339,7 +339,7 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
     /// <summary>
     /// Builds the Deployment Phase sub-workflow: Deploy to production
     /// </summary>
-    private static ExecutorIsh BuildDeploymentSubWorkflow()
+    private static ExecutorBinding BuildDeploymentSubWorkflow()
     {
         Console.WriteLine("\nBuilding DEPLOYMENT sub-workflow...");
 
@@ -350,7 +350,7 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
                 Console.WriteLine("  → ✅ DEPLOYED TO PRODUCTION!");
                 return ValueTask.FromResult(result);
             };
-        var deployExecutor = deployFunc.AsExecutor("DeployToProduction");
+        var deployExecutor = deployFunc.BindAsExecutor("DeployToProduction");
 
         var workflow = new WorkflowBuilder(deployExecutor)
             .WithOutputFrom(deployExecutor)

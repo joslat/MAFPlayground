@@ -42,7 +42,7 @@ internal static class Sample10_WorkflowAsAgent
         IChatClient chatClient = azureClient.GetChatClient(deploymentName).AsIChatClient();
 
         // Create the workflow that processes input using two language agents
-        var workflow = await GetBilingualWorkflowAsync(chatClient).ConfigureAwait(false);
+        var workflow = GetBilingualWorkflowAsync(chatClient);
 
         // Visualize the underlying workflow structure
         WorkflowVisualizerTool.PrintAll(workflow, "Bilingual Workflow (before conversion to agent)");
@@ -80,7 +80,7 @@ internal static class Sample10_WorkflowAsAgent
     /// </summary>
     /// <param name="chatClient">The chat client to use for the agents</param>
     /// <returns>A workflow that processes input using French and English agents</returns>
-    private static ValueTask<Workflow<List<ChatMessage>>> GetBilingualWorkflowAsync(IChatClient chatClient)
+    private static Workflow GetBilingualWorkflowAsync(IChatClient chatClient)
     {
         // Create executors
         var startExecutor = new ConcurrentStartExecutor();
@@ -95,7 +95,7 @@ internal static class Sample10_WorkflowAsAgent
             .AddFanOutEdge(startExecutor, targets: [ frenchAgent, englishAgent])
             .AddFanInEdge(aggregationExecutor, sources: [frenchAgent, englishAgent ])
             .WithOutputFrom(aggregationExecutor)
-            .BuildAsync<List<ChatMessage>>();
+            .Build();
     }
 
     /// <summary>

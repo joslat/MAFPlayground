@@ -40,4 +40,6 @@ Console.WriteLine("Hello, Microsoft Agent Framework!");
 //await Sample16_ChatWithWorkflow.Execute();
 //await Sample17_WriterCriticIterationWorkflow.Execute();
 //await Sample18_WriterCriticAgentsOnly.Execute();
-await Sample19_WriterCriticStructuredOutput.Execute();
+//await Sample19_WriterCriticStructuredOutput.Execute();
+//await Demo08_GitHubMasterMCPAgent.Execute();
+await Demo09_GraphDatabaseCrimeAgent.Execute();

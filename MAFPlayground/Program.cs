@@ -49,8 +49,9 @@ Console.WriteLine("Hello, Microsoft Agent Framework!");
 //await Demo07_MixedAgentsAndExecutors.Execute();
 
 //await Sample16_ChatWithWorkflow.Execute();
-await Sample17_WriterCriticIterationWorkflow.Execute();
+//await Sample17_WriterCriticIterationWorkflow.Execute();
 //await Sample18_WriterCriticAgentsOnly.Execute();
 //await Sample19_WriterCriticStructuredOutput.Execute();
+Sample20_DevUIBasicUsage.Execute(); // Note: This is synchronous (starts web server)
 //await Demo08_GitHubMasterMCPAgent.Execute();
 //await Demo09_GraphDatabaseCrimeAgent.Execute();

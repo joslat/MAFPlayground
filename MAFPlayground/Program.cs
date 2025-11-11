@@ -6,6 +6,17 @@ using MAFPlayground.Samples;
 
 Console.WriteLine("Hello, Microsoft Agent Framework!");
 
+/// AGENT DEMOS AND SAMPLES
+//await Demo01_BasicAgent.Execute();
+//await Sample02_ImageAgent.Execute();
+//await Sample03_FunctionsApprovals.Execute();
+//await Sample04_StructuredOutput.Execute();
+//await Demo02_SuperPoweredAssistant.Execute();
+//await Demo03_ChatWithSuperPoweredAssistant.Execute();
+//await Demo08_GitHubMasterMCPAgent.Execute();
+//await Demo09_GraphDatabaseCrimeAgent.Execute();
+
+
 //await Sample01_BasicAgent.Execute();
 //await Sample02_ImageAgent.Execute();  
 //await Sample03_FunctionsApprovals.Execute();
@@ -38,8 +49,8 @@ Console.WriteLine("Hello, Microsoft Agent Framework!");
 //await Demo07_MixedAgentsAndExecutors.Execute();
 
 //await Sample16_ChatWithWorkflow.Execute();
-//await Sample17_WriterCriticIterationWorkflow.Execute();
+await Sample17_WriterCriticIterationWorkflow.Execute();
 //await Sample18_WriterCriticAgentsOnly.Execute();
 //await Sample19_WriterCriticStructuredOutput.Execute();
 //await Demo08_GitHubMasterMCPAgent.Execute();
-await Demo09_GraphDatabaseCrimeAgent.Execute();
+//await Demo09_GraphDatabaseCrimeAgent.Execute();

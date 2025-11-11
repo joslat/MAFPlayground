@@ -20,6 +20,9 @@ internal static class Demo02_SuperPoweredAssistant
 {
     public static async Task Execute()
     {
+        // Set console encoding to UTF-8 to support emojis and special characters
+        Console.OutputEncoding = System.Text.Encoding.UTF8;
+
         Console.WriteLine("\n=== DEMO 02: THE SUPER-POWERED PERSONAL ASSISTANT ===\n");
 
         // Create the AzureOpenAIClient using the lazy config from AIConfig

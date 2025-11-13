@@ -42,7 +42,6 @@ internal static class Demo05_SubWorkflows
             async (text, ctx, ct) => string.Concat(text.Reverse());
         var reverseExecutor = reverseFunc.BindAsExecutor("ReverseExecutor");
 
-
         var uppercaseExecutor = new UppercaseExecutor();
         //var reverseExecutor = new ReverseExecutor();
         var appendExecutor = new AppendSuffixExecutor(" [PROCESSED]");

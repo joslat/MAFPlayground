@@ -2,6 +2,7 @@
 // Copyright (c) 2025 Jose Luis Latorre
 
 using Azure.AI.OpenAI;
+using MAFPlayground.Utils;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Workflows;
 using Microsoft.Extensions.AI;
@@ -96,6 +97,8 @@ internal static class Demo04_WorkflowsBasicSequentialContentProduction
 
         Workflow contentPipeline = AgentWorkflowBuilder
             .BuildSequential(researcher, writer, editor);
+
+        WorkflowVisualizerTool.PrintAll(contentPipeline, "sequential");
 
         Console.WriteLine("✅ Pipeline assembled: Researcher → Writer → Editor\n");
         Console.WriteLine(new string('=', 80));

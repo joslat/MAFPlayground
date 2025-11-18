@@ -5,7 +5,6 @@ using MAFPlayground.Demos;
 using MAFPlayground.Samples;
 
 Console.WriteLine("Hello, Microsoft Agent Framework!");
-//await Demo05_SubWorkflows.Execute();
 
 /// AGENT DEMOS AND SAMPLES
 //await Demo01_BasicAgent.Execute();
@@ -16,6 +15,7 @@ Console.WriteLine("Hello, Microsoft Agent Framework!");
 //await Demo03_ChatWithSuperPoweredAssistant.Execute();
 //await Demo08_GitHubMasterMCPAgent.Execute();
 //await Demo09_GraphDatabaseCrimeAgent.Execute();
+//await Demo10_DevMasterMultiMCP.Execute();
 
 
 //await Sample01_BasicAgent.Execute();
@@ -50,9 +50,14 @@ Console.WriteLine("Hello, Microsoft Agent Framework!");
 //await Demo07_MixedAgentsAndExecutors.Execute();
 
 //await Sample16_ChatWithWorkflow.Execute();
-await Sample17_WriterCriticIterationWorkflow.Execute();
+//await Sample17_WriterCriticIterationWorkflow.Execute();
 //await Sample18_WriterCriticAgentsOnly.Execute();
 //await Sample19_WriterCriticStructuredOutput.Execute();
-//Sample20_DevUIBasicUsage.Execute(); // Note: This is synchronous (starts web server)
+
+// DevUI Samples (synchronous - start web server)
+//Sample20_DevUIBasicUsage.Execute(); // Basic DevUI with 3 sample agents
+//Sample21_DevUIAllAgents.Execute();  // DevUI with ALL agents from samples/demos
+
 //await Demo08_GitHubMasterMCPAgent.Execute();
 //await Demo09_GraphDatabaseCrimeAgent.Execute();
+await Demo10_DevMasterMultiMCP.Execute();

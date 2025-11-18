@@ -77,6 +77,7 @@ internal static class Sample06_ConditionalEdges
             International Lottery Commission";
 
         // Execute the workflow
+        //await using Run run2 = await InProcessExecution.RunAsync(workflow, new ChatMessage(ChatRole.User, email));
         await using StreamingRun run = await InProcessExecution.StreamAsync(workflow, new ChatMessage(ChatRole.User, email));
         await run.TrySendMessageAsync(new TurnToken(emitEvents: true));
         await foreach (WorkflowEvent evt in run.WatchStreamAsync().ConfigureAwait(false))

@@ -1,0 +1,49 @@
+# Start AG-UI Client
+# This script starts the AG-UI Client connecting to http://localhost:8888
+
+Write-Host "???????????????????????????????????????????????????????????????" -ForegroundColor Cyan
+Write-Host "            AG-UI Client Startup Script" -ForegroundColor Cyan
+Write-Host "???????????????????????????????????????????????????????????????" -ForegroundColor Cyan
+Write-Host ""
+
+# Check if server is running
+$serverUrl = if ($env:AGUI_SERVER_URL) { $env:AGUI_SERVER_URL } else { "http://localhost:8888" }
+
+Write-Host "?? Checking server availability..." -ForegroundColor Yellow
+try {
+    $response = Invoke-WebRequest -Uri $serverUrl -Method Head -TimeoutSec 2 -ErrorAction Stop
+    Write-Host "? Server is running at: $serverUrl" -ForegroundColor Green
+} catch {
+    Write-Host "? WARNING: Cannot connect to server at $serverUrl" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Make sure the AG-UI Server is running:" -ForegroundColor Yellow
+    Write-Host "   1. Open another terminal" -ForegroundColor White
+    Write-Host "   2. Run: .\start-server.ps1" -ForegroundColor White
+    Write-Host ""
+    Write-Host "Do you want to continue anyway? (Y/N): " -ForegroundColor Yellow -NoNewline
+    $continue = Read-Host
+    if ($continue -ne 'Y' -and $continue -ne 'y') {
+        Write-Host "Exiting..." -ForegroundColor Gray
+        exit 1
+    }
+}
+
+Write-Host ""
+
+# Navigate to client directory
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+Push-Location (Join-Path $scriptDir "AGUI.Client")
+
+Write-Host "?? Starting AG-UI Client..." -ForegroundColor Green
+Write-Host ""
+Write-Host "Type your messages and press Enter" -ForegroundColor Gray
+Write-Host "Type ':q' or 'quit' to exit" -ForegroundColor Gray
+Write-Host "???????????????????????????????????????????????????????????????" -ForegroundColor Cyan
+Write-Host ""
+
+# Run the client
+try {
+    dotnet run --no-build
+} finally {
+    Pop-Location
+}

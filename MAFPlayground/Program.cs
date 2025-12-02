@@ -57,5 +57,5 @@ Console.WriteLine("Hello, Microsoft Agent Framework!");
 //await Sample20_DevUIBasicUsage.Execute(); // Note: This is synchronous (starts web server)
 //await Demo08_GitHubMasterMCPAgent.Execute();
 //await Demo09_GraphDatabaseCrimeAgent.Execute();
-//await Sample21_ChangeManagementReview.Execute();
+//await Sample21_FeatureComplianceReview.Execute();
 await Sample22_WorkshopPlanner.Execute();

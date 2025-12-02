@@ -13,17 +13,17 @@ using System.Threading.Tasks;
 
 namespace MAFPlayground.Samples;
 
-internal static class Sample21_ChangeManagementReview
+internal static class Sample21_FeatureComplianceReview
 {
     public static async Task Execute()
     {
-        Console.WriteLine("\n=== Sample 21: Change Management Feature Review (Executor-only) ===\n");
+        Console.WriteLine("\n=== Sample 21: Feature Compliance Review (Executor-only) ===\n");
         Console.WriteLine("This sample now mirrors the full mermaid workflow loop: feature sampling, feature loop controller, per-node routing, fan-out/in reviewers, per-feature aggregation, features aggregation, and final portfolio reporting.\n");
 
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> kickoff =
             (string input, IWorkflowContext context, CancellationToken cancellationToken) =>
             {
-                Console.WriteLine("Starting the change management review run (backlogs, time window, size 25, seed 420)...");
+                Console.WriteLine("Starting the feature compliance review run (backlogs, time window, size 10, seed 420)...");
                 return ValueTask.FromResult(input);
             };
         var kickoffExecutor = kickoff.BindAsExecutor("ReviewKickoff");
@@ -57,7 +57,7 @@ internal static class Sample21_ChangeManagementReview
                 Console.WriteLine(report.Narrative);
                 Console.WriteLine($"Actions backlog size: {report.ActionBacklog.Length}");
                 Console.WriteLine($"Sampling appendix: {report.SamplingSummary}");
-                return ValueTask.FromResult("Change Management review complete");
+                return ValueTask.FromResult("Feature Compliance review complete");
             };
         var reportingExecutor = reportingFunc.BindAsExecutor("FinalReporter");
 
@@ -106,7 +106,7 @@ internal static class Sample21_ChangeManagementReview
             .WithOutputFrom(reportingExecutor)
             .Build();
 
-        WorkflowVisualizerTool.PrintAll(workflow, "Sample 21: Change Management Review");
+        WorkflowVisualizerTool.PrintAll(workflow, "Sample 21: Feature Compliance Review");
 
         await using StreamingRun run = await InProcessExecution.StreamAsync(workflow, "StartReview");
         await foreach (WorkflowEvent evt in run.WatchStreamAsync().ConfigureAwait(false))
@@ -575,7 +575,7 @@ internal sealed class SamplingExecutor : ReflectingExecutor<SamplingExecutor>, I
         var metadata = new SamplingMetadata(
             WindowStart: DateTime.UtcNow.AddMonths(-3).Date,
             WindowEnd: DateTime.UtcNow.Date.AddDays(-1),
-            SampleSize: 25,
+            SampleSize: 10,
             Seed: 420,
             Strata: strata,
             GeneratedAt: DateTime.UtcNow);
@@ -642,7 +642,7 @@ internal sealed class FeatureGraphBuilder
         var featureTitle = "Feature Review - " + featureId;
         var nodes = new List<GraphNode>
         {
-            CreateNode(featureId, NodeType.Feature, featureTitle, "Change management review target", new Dictionary<string, string>
+            CreateNode(featureId, NodeType.Feature, featureTitle, "Feature compliance review target", new Dictionary<string, string>
             {
                 ["State"] = "Ready",
                 ["Area"] = "Core Platform",
@@ -776,7 +776,7 @@ internal static class PortfolioReporter
             .ToArray();
 
         string narrative = new StringBuilder()
-            .AppendLine("Change management review complete")
+            .AppendLine("Feature compliance review complete")
             .AppendLine($"Features reviewed: {featuresReviewed}")
             .AppendLine($"Deviations observed: {totalDeviations}")
             .AppendLine($"Actions deduplicated: {uniqueActions.Length}")

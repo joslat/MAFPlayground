@@ -310,7 +310,7 @@ internal abstract class NodeReviewerExecutorBase<TExecutor> : ReflectingExecutor
     private readonly NodeType _nodeType;
     private readonly string _label;
 
-    protected NodeReviewerExecutorBase(string executorLabel, NodeType nodeType) : base(executorLabel)
+    protected NodeReviewerExecutorBase(string executorLabel, NodeType nodeType) : base(executorLabel.Replace(" ", "_"))
     {
         _label = executorLabel;
         _nodeType = nodeType;

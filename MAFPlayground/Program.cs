@@ -57,5 +57,11 @@ Console.WriteLine("Hello, Microsoft Agent Framework!");
 //await Sample20_DevUIBasicUsage.Execute(); // Note: This is synchronous (starts web server)
 //await Demo08_GitHubMasterMCPAgent.Execute();
 //await Demo09_GraphDatabaseCrimeAgent.Execute();
-await Sample21_FeatureComplianceReview.Execute();
+//await Demo10_DevMasterMultiMCP.Execute();
+
+// Demo 11: Claims Workflow - Choose your mode!
+await Demo11_ClaimsWorkflow.Execute();              // Console mode (interactive)
+//Demo11_ClaimsWorkflow.ExecuteWithDevUI();         // DevUI mode (visual debugging)
+
+//await Sample21_FeatureComplianceReview.Execute();
 //await Sample22_WorkshopPlanner.Execute();

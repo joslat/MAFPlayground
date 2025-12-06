@@ -336,7 +336,7 @@ internal static class Demo12V2_ClaimsFraudDetection
                 condition: dr => dr is not null && dr.Proceed)
             .AddEdge(classificationExec, propertyTheftFanOutExec)
             .AddFanOutEdge(propertyTheftFanOutExec, targets: [osintExec, userHistoryExec, transactionExec])
-            .AddFanInEdge(sources: [osintExec, userHistoryExec, transactionExec], fraudAggregatorExec)
+            .AddFanInEdge(fraudAggregatorExec, sources: [osintExec, userHistoryExec, transactionExec])
             .AddEdge(fraudAggregatorExec, fraudDecisionExec)
             .AddEdge(fraudDecisionExec, outcomeExec)
             .WithOutputFrom(outcomeExec)
@@ -582,17 +582,19 @@ internal static class Demo12V2_ClaimsFraudDetection
 
     private sealed class OSINTExecutor :
         ReflectingExecutor<OSINTExecutor>,
-        IMessageHandler<string, string>  // ✅ Changed from IMessageHandler<string, OSINTFinding>
+        IMessageHandler<string, string>
     {
         private readonly AIAgent _agent;
         public OSINTExecutor(AIAgent agent) : base("OSINT") => _agent = agent;
 
-        public async ValueTask<string> HandleAsync(  // ✅ Changed return type
-            string _,
+        // ✅ Truly synchronous - NO async keyword, NO async helper
+        public ValueTask<string> HandleAsync(
+            string message,
             IWorkflowContext context,
             CancellationToken cancellationToken = default)
         {
-            var state = await ReadFraudStateAsync(context);
+            // ✅ Do all work synchronously (blocking on async operations)
+            var state = ReadFraudStateAsync(context).GetAwaiter().GetResult();
             var claim = state.OriginalClaim!;
             
             Console.WriteLine("=== OSINT Validation (Online Marketplaces) ===\n");
@@ -607,38 +609,37 @@ internal static class Demo12V2_ClaimsFraudDetection
                 Use check_online_marketplaces tool to search.
                 """;
 
-            var response = await _agent.RunAsync(prompt, cancellationToken: cancellationToken);
+            var response = _agent.RunAsync(prompt, cancellationToken: cancellationToken).GetAwaiter().GetResult();
             var finding = response.Deserialize<OSINTFinding>(JsonSerializerOptions.Web);
 
             // Store finding in shared state
             state.OSINTFinding = finding;
-            await SaveFraudStateAsync(context, state);
+            SaveFraudStateAsync(context, state).GetAwaiter().GetResult();
 
             Console.WriteLine($"✓ OSINT Check Complete - Fraud Score: {finding.FraudIndicatorScore}/100\n");
 
-            // ✅ Return simple confirmation message following Sample14 pattern
-            var result = $"[OSINT] ✓ Analysis complete - Fraud score: {finding.FraudIndicatorScore}/100 - Findings stored in shared state";
+            // ✅ Return synchronously like Test02!
+            var result = $"[OSINT] ✓ Analysis complete - Fraud score: {finding.FraudIndicatorScore}/100";
             Console.WriteLine($"[DEBUG - OSINTExecutor] Returning: '{result}'\n");
-
-            //return result;
-            await context.SendMessageAsync(result, cancellationToken: cancellationToken);
-            return result;
+            return ValueTask.FromResult(result);
         }
     }
 
     private sealed class UserHistoryExecutor :
         ReflectingExecutor<UserHistoryExecutor>,
-        IMessageHandler<string, string>  // ✅ Changed from IMessageHandler<string, UserHistoryFinding>
+        IMessageHandler<string, string>
     {
         private readonly AIAgent _agent;
         public UserHistoryExecutor(AIAgent agent) : base("UserHistory") => _agent = agent;
 
-        public async ValueTask<string> HandleAsync(  // ✅ Changed return type
-            string _,
+        // ✅ Truly synchronous - NO async keyword, NO async helper
+        public ValueTask<string> HandleAsync(
+            string message,
             IWorkflowContext context,
             CancellationToken cancellationToken = default)
         {
-            var state = await ReadFraudStateAsync(context);
+            // ✅ Do all work synchronously (blocking on async operations)
+            var state = ReadFraudStateAsync(context).GetAwaiter().GetResult();
             var claim = state.OriginalClaim!;
             
             Console.WriteLine("=== User History Analysis ===\n");
@@ -652,38 +653,37 @@ internal static class Demo12V2_ClaimsFraudDetection
                 Use get_customer_claim_history tool to retrieve past claims.
                 """;
 
-            var response = await _agent.RunAsync(prompt, cancellationToken: cancellationToken);
+            var response = _agent.RunAsync(prompt, cancellationToken: cancellationToken).GetAwaiter().GetResult();
             var finding = response.Deserialize<UserHistoryFinding>(JsonSerializerOptions.Web);
 
             // Store finding in shared state
             state.UserHistoryFinding = finding;
-            await SaveFraudStateAsync(context, state);
+            SaveFraudStateAsync(context, state).GetAwaiter().GetResult();
 
             Console.WriteLine($"✓ User History Check Complete - Customer Fraud Score: {finding.CustomerFraudScore}/100\n");
 
-            // ✅ Return simple confirmation message following Sample14 pattern
-            var result = $"[User History] ✓ Analysis complete - Customer fraud score: {finding.CustomerFraudScore}/100 - Findings stored in shared state";
+            // ✅ Return synchronously like Test02!
+            var result = $"[User History] ✓ Analysis complete - Customer fraud score: {finding.CustomerFraudScore}/100";
             Console.WriteLine($"[DEBUG - UserHistoryExecutor] Returning: '{result}'\n");
-
-            
-            await context.SendMessageAsync(result, cancellationToken: cancellationToken);
-            return result;
+            return ValueTask.FromResult(result);
         }
     }
 
     private sealed class TransactionFraudExecutor :
         ReflectingExecutor<TransactionFraudExecutor>,
-        IMessageHandler<string, string>  // ✅ Changed from IMessageHandler<string, TransactionFraudFinding>
+        IMessageHandler<string, string>
     {
         private readonly AIAgent _agent;
         public TransactionFraudExecutor(AIAgent agent) : base("TransactionFraud") => _agent = agent;
 
-        public async ValueTask<string> HandleAsync(  // ✅ Changed return type
-            string _,
+        // ✅ Truly synchronous - NO async keyword, NO async helper
+        public ValueTask<string> HandleAsync(
+            string message,
             IWorkflowContext context,
             CancellationToken cancellationToken = default)
         {
-            var state = await ReadFraudStateAsync(context);
+            // ✅ Do all work synchronously (blocking on async operations)
+            var state = ReadFraudStateAsync(context).GetAwaiter().GetResult();
             var claim = state.OriginalClaim!;
             
             Console.WriteLine("=== Transaction Fraud Scoring ===\n");
@@ -698,21 +698,19 @@ internal static class Demo12V2_ClaimsFraudDetection
                 Use get_transaction_risk_profile tool for context.
                 """;
 
-            var response = await _agent.RunAsync(prompt, cancellationToken: cancellationToken);
+            var response = _agent.RunAsync(prompt, cancellationToken: cancellationToken).GetAwaiter().GetResult();
             var finding = response.Deserialize<TransactionFraudFinding>(JsonSerializerOptions.Web);
 
             // Store finding in shared state
             state.TransactionFraudFinding = finding;
-            await SaveFraudStateAsync(context, state);
+            SaveFraudStateAsync(context, state).GetAwaiter().GetResult();
 
             Console.WriteLine($"✓ Transaction Analysis Complete - Fraud Score: {finding.TransactionFraudScore}/100\n");
 
-            // ✅ Return simple confirmation message following Sample14 pattern
-            var result = $"[Transaction Fraud] ✓ Analysis complete - Fraud score: {finding.TransactionFraudScore}/100 - Findings stored in shared state";
+            // ✅ Return synchronously like Test02!
+            var result = $"[Transaction Fraud] ✓ Analysis complete - Fraud score: {finding.TransactionFraudScore}/100";
             Console.WriteLine($"[DEBUG - TransactionFraudExecutor] Returning: '{result}'\n");
-
-            await context.SendMessageAsync(result, cancellationToken: cancellationToken);
-            return result;
+            return ValueTask.FromResult(result);
         }
     }
 
@@ -727,7 +725,8 @@ internal static class Demo12V2_ClaimsFraudDetection
 
         public FraudAggregatorExecutor() : base("FraudAggregator") { }
 
-        public async ValueTask<string> HandleAsync(
+        // ✅ Truly synchronous - like Test02
+        public ValueTask<string> HandleAsync(
             string confirmation, 
             IWorkflowContext context, 
             CancellationToken cancellationToken = default)
@@ -743,8 +742,8 @@ internal static class Demo12V2_ClaimsFraudDetection
             {
                 Console.WriteLine("\n=== All Fraud Findings Collected (Fan-In) ===\n");
                 
-                // Verify all findings are in shared state
-                var state = await ReadFraudStateAsync(context);
+                // ✅ Block on async state verification (like Test02)
+                var state = ReadFraudStateAsync(context).GetAwaiter().GetResult();
                 var allPresent = state.OSINTFinding != null && 
                                 state.UserHistoryFinding != null && 
                                 state.TransactionFraudFinding != null;
@@ -767,11 +766,12 @@ internal static class Demo12V2_ClaimsFraudDetection
                 // Reset for potential re-runs
                 _confirmations.Clear();
                 
-                return $"[Fraud Analysis Complete]\n{summary}\n[Proceeding to final decision]";
+                var result = $"[Fraud Analysis Complete]\n{summary}\n[Proceeding to final decision]";
+                return ValueTask.FromResult(result);
             }
 
             // Return null to signal workflow to wait for more inputs
-            return null!;
+            return ValueTask.FromResult<string>(null!);
         }
     }
 

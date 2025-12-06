@@ -63,13 +63,15 @@ Console.WriteLine("Hello, Microsoft Agent Framework!");
 // Demo 11: Claims Workflow - Choose your mode!
 //await Demo11_ClaimsWorkflow.Execute();              // Console mode (interactive)
 //await Demo12_ClaimsFraudDetection.Execute();
-//await Demo12V2_ClaimsFraudDetection.Execute();      // Console mode improved
+//await Demo12V2_ClaimsFraudDetection.Execute();      // Console mode improved - FIXED!
 
 // ════════════════════════════════════════════════════════════════════════════════
 // TESTS - Minimal test cases to understand workflow patterns
 // ════════════════════════════════════════════════════════════════════════════════
-//await Test01_FanOutFanInBasic.Execute();              // Basic fan-out/fan-in with function-based executors
-await Test02_FanOutFanInClassBased.Execute();         // Basic fan-out/fan-in with class-based executors
+//await Test01_FanOutFanInBasic.Execute();                    // Basic fan-out/fan-in with function-based executors
+//await Test02_FanOutFanInClassBased.Execute();               // Basic fan-out/fan-in with class-based executors
+//await Test03_FanOutFanInWithAsyncBlocking.Execute();        // Fan-out/fan-in with async blocking ✅ WORKS!
+await Test04_FanOutFanInWithRealStateOperations.Execute();  // Fan-out/fan-in with REAL context state ops (CRITICAL!)
 //await Sample14_SoftwareDevelopmentPipeline.Execute();
 // ════════════════════════════════════════════════════════════════════════════════
 

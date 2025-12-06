@@ -4,6 +4,7 @@
 using MAFPlayground.Demos;
 using MAFPlayground.Samples;
 using MAFPlayground.Samples.Sample22_WorkshopPlanner;
+using MAFPlayground.Tests;
 
 Console.WriteLine("Hello, Microsoft Agent Framework!");
 //await Demo05_SubWorkflows.Execute();
@@ -62,7 +63,15 @@ Console.WriteLine("Hello, Microsoft Agent Framework!");
 // Demo 11: Claims Workflow - Choose your mode!
 //await Demo11_ClaimsWorkflow.Execute();              // Console mode (interactive)
 //await Demo12_ClaimsFraudDetection.Execute();
-await Demo12V2_ClaimsFraudDetection.Execute();    // Console mode improved
+//await Demo12V2_ClaimsFraudDetection.Execute();      // Console mode improved
+
+// ════════════════════════════════════════════════════════════════════════════════
+// TESTS - Minimal test cases to understand workflow patterns
+// ════════════════════════════════════════════════════════════════════════════════
+//await Test01_FanOutFanInBasic.Execute();              // Basic fan-out/fan-in with function-based executors
+await Test02_FanOutFanInClassBased.Execute();         // Basic fan-out/fan-in with class-based executors
+//await Sample14_SoftwareDevelopmentPipeline.Execute();
+// ════════════════════════════════════════════════════════════════════════════════
 
 //await Sample21_FeatureComplianceReview.Execute();
 //await Sample22_WorkshopPlanner.Execute();

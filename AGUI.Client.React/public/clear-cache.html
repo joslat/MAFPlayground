@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear CopilotKit Cache</title>
+</head>
+<body>
+    <h1>Clearing Browser Storage...</h1>
+    <pre id="log"></pre>
+    
+    <script>
+        const log = document.getElementById('log');
+        
+        function addLog(msg) {
+            log.textContent += msg + '\n';
+        }
+        
+        // Clear localStorage
+        try {
+            const localStorageKeys = Object.keys(localStorage);
+            addLog(`Found ${localStorageKeys.length} localStorage items`);
+            localStorage.clear();
+            addLog('? localStorage cleared');
+        } catch (e) {
+            addLog('? localStorage error: ' + e.message);
+        }
+        
+        // Clear sessionStorage
+        try {
+            const sessionStorageKeys = Object.keys(sessionStorage);
+            addLog(`Found ${sessionStorageKeys.length} sessionStorage items`);
+            sessionStorage.clear();
+            addLog('? sessionStorage cleared');
+        } catch (e) {
+            addLog('? sessionStorage error: ' + e.message);
+        }
+        
+        // Clear IndexedDB
+        indexedDB.databases().then(databases => {
+            addLog(`Found ${databases.length} IndexedDB databases`);
+            databases.forEach(db => {
+                indexedDB.deleteDatabase(db.name);
+                addLog(`? Deleted database: ${db.name}`);
+            });
+        }).catch(e => {
+            addLog('? IndexedDB error: ' + e.message);
+        });
+        
+        addLog('\n? Storage cleared! Now refresh the main app.');
+        addLog('\n??  Go to: http://localhost:5173');
+    </script>
+</body>
+</html>

@@ -318,7 +318,10 @@ internal sealed class ExpertReviewAggregator : ReflectingExecutor<ExpertReviewAg
         _expectedCount = expectedCount;
     }
 
-    public ValueTask<string> HandleAsync(string message, IWorkflowContext context, CancellationToken cancellationToken = default)
+    public ValueTask<string> HandleAsync(
+        string message, 
+        IWorkflowContext context, 
+        CancellationToken cancellationToken = default)
     {
         _reviews.Add(message);
         Console.WriteLine($"  [Aggregator] Collected review {_reviews.Count}/{_expectedCount}");

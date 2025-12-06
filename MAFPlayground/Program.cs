@@ -60,8 +60,49 @@ Console.WriteLine("Hello, Microsoft Agent Framework!");
 //await Demo10_DevMasterMultiMCP.Execute();
 
 // Demo 11: Claims Workflow - Choose your mode!
-await Demo11_ClaimsWorkflow.Execute();              // Console mode (interactive)
-//Demo11_ClaimsWorkflow.ExecuteWithDevUI();         // DevUI mode (visual debugging)
+//await Demo11_ClaimsWorkflow.Execute();              // Console mode (interactive)
+//await Demo12_ClaimsFraudDetection.Execute();
+await Demo12V2_ClaimsFraudDetection.Execute();    // Console mode improved
 
 //await Sample21_FeatureComplianceReview.Execute();
 //await Sample22_WorkshopPlanner.Execute();
+
+//Sample22_DevUI_UserInput.ExecuteDevUI(); // Note: This is synchronous (starts web server)
+
+
+
+// ════════════════════════════════════════════════════════════════════════════════
+// AG-UI SAMPLES (Separate Projects - React Frontend Required)
+// ════════════════════════════════════════════════════════════════════════════════
+// These samples demonstrate AG-UI protocol features with CopilotKit React components.
+// They run as separate server + client projects outside MAFPlayground.
+//
+// 📦 Projects:
+//   • AGUI.Server - ASP.NET Core AG-UI backend (shared with console client)
+//   • AGUI.Client.React - React + CopilotKit frontend (NEW)
+//   • AGUI.Client - Console client (existing)
+//
+// 🚀 How to Run Shared State Recipe Sample:
+//   1. Terminal 1 - Start Backend:
+//      cd AGUI.Server
+//      $env:AGUI_AGENT_TYPE='sharedstate'
+//      dotnet run
+//
+//   2. Terminal 2 - Start React Frontend:
+//      cd AGUI.Client.React
+//      npm install  # First time only
+//      npm run dev
+//
+//   3. Open browser: http://localhost:5173
+//
+// 💡 Sample: SharedStateCookingSimple
+//   • Recipe Assistant with INSTANT state updates
+//   • Agent reads/writes ingredients, instructions, dietary preferences
+//   • No network latency - UI updates immediately when agent modifies state
+//   • Uses CopilotKit useCopilotReadable/useCopilotAction hooks
+//   • Full AG-UI protocol compliance with shared state feature
+//
+// 📚 Learn More:
+//   • AGUI.Server/Agents/SharedStateCookingSimple/README.md
+//   • https://docs.copilotkit.ai/microsoft-agent-framework/shared-state
+// ════════════════════════════════════════════════════════════════════════════════

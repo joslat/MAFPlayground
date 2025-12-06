@@ -285,90 +285,6 @@ internal static class Demo11_ClaimsWorkflow
     }
 
     /// <summary>
-    /// Execute with DevUI - Opens a web interface for visual workflow debugging
-    /// </summary>
-    public static void ExecuteWithDevUI()
-    {
-        // Set console encoding to UTF-8 to support emojis and special characters
-        Console.OutputEncoding = System.Text.Encoding.UTF8;
-
-        Console.WriteLine("=== Demo 11: Claims Processing Workflow (DevUI Mode) ===\n");
-        Console.WriteLine("Setting up web server with DevUI for visual debugging...\n");
-
-        var builder = WebApplication.CreateBuilder(new WebApplicationOptions
-        {
-            EnvironmentName = Environments.Development // Force Development mode for DevUI
-        });
-
-        // Set up the Azure OpenAI client
-        var azureClient = new AzureOpenAIClient(AIConfig.Endpoint, AIConfig.KeyCredential);
-        var chatClient = azureClient
-            .GetChatClient("gpt-4o")
-            .AsIChatClient();
-
-        builder.Services.AddChatClient(chatClient);
-
-        // Register the claims workflow as an AI agent
-        Console.WriteLine("Registering Claims Workflow...");
-        
-        builder.AddWorkflow("claims-workflow", (sp, key) =>
-        {
-            var chatClientFromSP = sp.GetRequiredService<IChatClient>();
-            return BuildClaimsWorkflow(chatClientFromSP, key);
-        }).AddAsAIAgent();
-        
-        Console.WriteLine("  ✓ claims-workflow - Interactive claims processing\n");
-
-        // Configure DevUI Services
-        builder.Services.AddOpenAIResponses();
-        builder.Services.AddOpenAIConversations();
-
-        var app = builder.Build();
-
-        // Map DevUI Endpoints
-        app.MapOpenAIResponses();
-        app.MapOpenAIConversations();
-        app.MapDevUI();
-
-        // Display Usage Information
-        var url = "http://localhost:5000";
-        
-        Console.WriteLine(new string('=', 80));
-        Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine("✅ Claims Workflow DevUI Server Started!");
-        Console.ResetColor();
-        Console.WriteLine(new string('=', 80));
-        
-        Console.WriteLine("\n📊 Available Endpoints:");
-        Console.WriteLine($"  • DevUI Interface:           {url}/devui");
-        Console.WriteLine($"  • OpenAI Responses API:      {url}/v1/responses");
-        Console.WriteLine($"  • OpenAI Conversations API:  {url}/v1/conversations");
-        
-        Console.WriteLine("\n🤖 Registered Workflow:");
-        Console.WriteLine("  • claims-workflow - Three-agent claims processing workflow");
-        Console.WriteLine("    - UserInputExecutor → ClaimsIntakeExecutor → ClaimsValidationExecutor → ClaimsProcessingExecutor");
-        
-        Console.WriteLine("\n💡 How to Use:");
-        Console.WriteLine($"  1. Open your browser to: {url}/devui");
-        Console.WriteLine("  2. Select 'claims-workflow' from the dropdown");
-        Console.WriteLine($"  3. Start with: \"Hello, I need to file a claim.\"");
-        Console.WriteLine("  4. Watch the workflow execute step-by-step");
-        Console.WriteLine("  5. See each executor, state changes, and agent interactions");
-        
-        Console.WriteLine("\n🔍 DevUI Features:");
-        Console.WriteLine("  ✓ Visual workflow execution");
-        Console.WriteLine("  ✓ Step-by-step executor tracking");
-        Console.WriteLine("  ✓ Real-time state inspection");
-        Console.WriteLine("  ✓ Agent conversation history");
-        Console.WriteLine("  ✓ Tool call monitoring");
-        
-        Console.WriteLine("\n⚠️  Press Ctrl+C to stop the server");
-        Console.WriteLine(new string('=', 80) + "\n");
-
-        app.Run();
-    }
-
-    /// <summary>
     /// Builds the claims workflow with all executors and routing logic.
     /// This method is shared between console mode and DevUI mode.
     /// </summary>
@@ -803,6 +719,30 @@ internal static class Demo11_ClaimsWorkflow
             if (validation.Ready)
             {
                 Console.WriteLine("✅ Validation passed! Claim is complete.");
+                Console.ResetColor();
+                Console.WriteLine();
+                
+                // Print the complete claim composition
+                Console.WriteLine(new string('─', 80));
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine("📋 CLAIM COMPOSITION - Collaboratively Built by Agents");
+                Console.ResetColor();
+                Console.WriteLine(new string('─', 80));
+                Console.WriteLine();
+                
+                var jsonOptions = new JsonSerializerOptions 
+                { 
+                    WriteIndented = true,
+                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+                };
+                var readableJson = JsonSerializer.Serialize(validation, jsonOptions);
+                
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.WriteLine(readableJson);
+                Console.ResetColor();
+                Console.WriteLine();
+                Console.WriteLine(new string('─', 80));
+                Console.WriteLine();
             }
             else
             {
@@ -811,9 +751,9 @@ internal static class Demo11_ClaimsWorkflow
                 {
                     Console.WriteLine($"🚫 Blocking issues: {string.Join(", ", validation.BlockingIssues)}");
                 }
+                Console.ResetColor();
+                Console.WriteLine();
             }
-            Console.ResetColor();
-            Console.WriteLine();
 
             // Update state with resolved data
             if (validation.CustomerId != null && state.Customer != null)

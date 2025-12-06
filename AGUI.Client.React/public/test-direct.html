@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Direct Test - No Cache</title>
+</head>
+<body>
+    <h1>Testing Direct Connection</h1>
+    <button onclick="testConnection()">Test Backend</button>
+    <pre id="result"></pre>
+
+    <script>
+        async function testConnection() {
+            const resultEl = document.getElementById('result');
+            resultEl.textContent = 'Testing...';
+            
+            try {
+                // Test OPTIONS request
+                const optionsResp = await fetch('http://localhost:8888/', {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Origin': 'http://localhost:5173',
+                        'Access-Control-Request-Method': 'POST'
+                    }
+                });
+                
+                resultEl.textContent += `\nOPTIONS /: ${optionsResp.status}`;
+                
+                // Test POST request
+                const postResp = await fetch('http://localhost:8888/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': 'http://localhost:5173'
+                    },
+                    body: JSON.stringify({ test: 'hello' })
+                });
+                
+                resultEl.textContent += `\nPOST /: ${postResp.status}`;
+                resultEl.textContent += `\n\n? Backend is responding correctly!`;
+                
+            } catch (error) {
+                resultEl.textContent += `\n\n? Error: ${error.message}`;
+            }
+        }
+        
+        // Also test the old endpoint
+        async function testOldEndpoint() {
+            try {
+                const resp = await fetch('http://localhost:8888/api/recipe', {
+                    method: 'OPTIONS'
+                });
+                console.log('/api/recipe status:', resp.status);
+            } catch (error) {
+                console.log('/api/recipe error:', error.message);
+            }
+        }
+        
+        testOldEndpoint();
+    </script>
+</body>
+</html>

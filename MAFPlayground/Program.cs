@@ -63,7 +63,7 @@ Console.WriteLine("Hello, Microsoft Agent Framework!");
 // Demo 11: Claims Workflow - Choose your mode!
 //await Demo11_ClaimsWorkflow.Execute();              // Console mode (interactive)
 //await Demo12_ClaimsFraudDetection.Execute();
-//await Demo12V2_ClaimsFraudDetection.Execute();      // Console mode improved - FIXED!
+await Demo12V2_ClaimsFraudDetection.Execute();      // Console mode improved - FINAL FIX!!!
 
 // ════════════════════════════════════════════════════════════════════════════════
 // TESTS - Minimal test cases to understand workflow patterns
@@ -73,7 +73,7 @@ Console.WriteLine("Hello, Microsoft Agent Framework!");
 //await Test03_FanOutFanInWithAsyncBlocking.Execute();        // Fan-out/fan-in with async blocking ✅ WORKS!
 //await Test04_FanOutFanInWithRealStateOperations.Execute();  // Fan-out/fan-in with context state blocking ❌ FAILS!
 //await Test05_FanOutFanInWithProperAsync.Execute();          // Fan-out/fan-in with proper async/await ❌ STILL FAILS!
-await Test06_FanOutFanInStateInAggregator.Execute();        // Fan-out/fan-in with state in aggregator ❓ CRITICAL TEST!
+//await Test06_FanOutFanInStateInAggregator.Execute();        // Fan-out/fan-in with state in aggregator ✅ WORKS!
 //await Sample14_SoftwareDevelopmentPipeline.Execute();
 // ════════════════════════════════════════════════════════════════════════════════
 

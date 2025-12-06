@@ -71,7 +71,9 @@ Console.WriteLine("Hello, Microsoft Agent Framework!");
 //await Test01_FanOutFanInBasic.Execute();                    // Basic fan-out/fan-in with function-based executors
 //await Test02_FanOutFanInClassBased.Execute();               // Basic fan-out/fan-in with class-based executors
 //await Test03_FanOutFanInWithAsyncBlocking.Execute();        // Fan-out/fan-in with async blocking ✅ WORKS!
-await Test04_FanOutFanInWithRealStateOperations.Execute();  // Fan-out/fan-in with REAL context state ops (CRITICAL!)
+//await Test04_FanOutFanInWithRealStateOperations.Execute();  // Fan-out/fan-in with context state blocking ❌ FAILS!
+//await Test05_FanOutFanInWithProperAsync.Execute();          // Fan-out/fan-in with proper async/await ❌ STILL FAILS!
+await Test06_FanOutFanInStateInAggregator.Execute();        // Fan-out/fan-in with state in aggregator ❓ CRITICAL TEST!
 //await Sample14_SoftwareDevelopmentPipeline.Execute();
 // ════════════════════════════════════════════════════════════════════════════════
 

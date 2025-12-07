@@ -2,6 +2,7 @@
 // Copyright (c) 2025 Jose Luis Latorre
 
 using MAFPlayground.Demos;
+using MAFPlayground.Demos.ClaimsDemo;
 using MAFPlayground.Samples;
 using MAFPlayground.Samples.Sample22_WorkshopPlanner;
 using MAFPlayground.Tests;

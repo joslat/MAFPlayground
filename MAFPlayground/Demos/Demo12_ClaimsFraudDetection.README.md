@@ -4,6 +4,109 @@
 
 This demo implements a **comprehensive fraud detection pipeline** that takes a validated claim from Demo11 and analyzes it through multiple AI agents working in parallel to detect potential fraud indicators. It demonstrates fan-out/fan-in patterns, shared state aggregation, and multi-perspective fraud analysis.
 
+## ?? CRITICAL PATTERN DISCOVERED (Test01-Test06)
+
+Through systematic testing (Test01 through Test06), we discovered a **critical limitation** in the Microsoft Agent Framework when using fan-out/fan-in patterns with workflow context state operations:
+
+### ?? What BREAKS Fan-In Routing:
+
+**Fan-out executors (source nodes) using `context.ReadStateAsync()` or `context.QueueStateUpdateAsync()`**
+
+```csharp
+// ? THIS BREAKS FAN-IN - Aggregator never receives the return value!
+private sealed class OSINTExecutor : IMessageHandler<string, OSINTFinding>
+{
+    public async ValueTask<OSINTFinding> HandleAsync(...)
+    {
+        var state = await context.ReadStateAsync<...>();  // ? BREAKS IT!
+        // ... do work ...
+        await context.QueueStateUpdateAsync(..., state);  // ? BREAKS IT!
+        return finding;  // ? This return value never reaches the aggregator!
+    }
+}
+```
+
+### ? What WORKS:
+
+#### 1. **Fan-Out Executor (PropertyTheftFanOut):** Read state BEFORE SendMessage
+```csharp
+public async ValueTask HandleAsync(...)
+{
+    // ? Read state in fan-out executor (before SendMessage)
+    var state = await context.ReadStateAsync<...>();
+    var claim = state.OriginalClaim;
+    
+    // ? Send data via message
+    await context.SendMessageAsync(claim, ...);
+}
+```
+
+#### 2. **Fan-Out Source Executors (OSINT, UserHistory, Transaction):** NO state operations!
+```csharp
+public async ValueTask<OSINTFinding> HandleAsync(
+    ValidationResult claim,  // ? Receive data via parameter
+    ...)
+{
+    // ? NO context.ReadStateAsync()
+    // ? NO context.QueueStateUpdateAsync()
+    // ? Work with passed data only
+    
+    var finding = ...; // Do work
+    return finding;  // ? Returns successfully to aggregator!
+}
+```
+
+#### 3. **Aggregator:** State operations work perfectly!
+```csharp
+public async ValueTask<string> HandleAsync(...)
+{
+    // ? Aggregator CAN use state operations freely!
+    var state = await context.ReadStateAsync<...>();
+    state.OSINTFinding = finding;
+    await context.QueueStateUpdateAsync(..., state);
+    
+    return result;
+}
+```
+
+#### 4. **Other Executors (outside fan-in):** State operations work fine
+```csharp
+// DataReview, Classification, FraudDecision, OutcomePresenter
+// ? All can use context state operations normally
+```
+
+### ?? Test Results Summary:
+
+| Test | Pattern | Result |
+|------|---------|--------|
+| Test01 | Function-based, no async | ? WORKS |
+| Test02 | Class-based, no async | ? WORKS |
+| Test03 | Class-based, mock async (Task.Delay) | ? WORKS |
+| Test04 | **Fan-out: context state (blocking)** | ? **FAILS** |
+| Test05 | **Fan-out: context state (async/await)** | ? **FAILS** |
+| Test06 | **Aggregator: context state** | ? **WORKS!** |
+
+**Conclusion:** The issue is NOT blocking vs async - it's using `context.ReadStateAsync()`/`context.QueueStateUpdateAsync()` **in fan-out source executors specifically**.
+
+### ?? The Working Pattern:
+
+```
+PropertyTheftFanOut (reads state, sends claim data)
+    ?
+    SendMessage(claim)
+    ?
+    ?? OSINTExecutor(claim) ? OSINTFinding (NO STATE OPS!)
+    ?? UserHistoryExecutor(claim) ? UserHistoryFinding (NO STATE OPS!)
+    ?? TransactionExecutor(claim) ? TransactionFraudFinding (NO STATE OPS!)
+    ?
+FraudAggregator (collects findings, stores in state)
+```
+
+### ?? GitHub Issue Filed:
+[Link to issue when filed]
+
+---
+
 ## Workflow Architecture
 
 ```mermaid

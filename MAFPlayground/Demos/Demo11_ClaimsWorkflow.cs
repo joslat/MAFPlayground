@@ -133,6 +133,9 @@ internal static class Demo11_ClaimsWorkflow
         [JsonPropertyName("short_description")]
         public string ShortDescription { get; set; } = "";
         
+        [JsonPropertyName("item_description")]
+        public string ItemDescription { get; set; } = ""; // MANDATORY: e.g., "Trek X-Caliber 8, red mountain bike"
+        
         [JsonPropertyName("detailed_description")]
         public string DetailedDescription { get; set; } = "";
         
@@ -344,7 +347,8 @@ internal static class Demo11_ClaimsWorkflow
                    - date_of_loss (when the incident occurred)
                    - date_reported (when reporting - ALWAYS call get_current_date tool to get today's date)
                    - short_description (1-2 sentences)
-                   - detailed_description (what happened, including purchase price if applicable)
+                   - item_description (MANDATORY: specific description of the item - e.g., "Trek X-Caliber 8, red mountain bike")
+                   - detailed_description (what happened, including circumstances and purchase price if applicable)
                 
                 TOOLS AVAILABLE:
                 - get_current_date: ALWAYS call this at the start to get today's date for date_reported field
@@ -361,8 +365,9 @@ internal static class Demo11_ClaimsWorkflow
                 - When user mentions dates relative to today (today, yesterday, last Tuesday), 
                   use get_current_date to calculate the exact date
                 - Once you have all required information, confirm and proceed
-                - Ask for a description of the incident in detail, and for the item stolen or damaged (if something has been stolen or damaged)
-                - Remember to ask for the price of the item if applicable
+                - ALWAYS ask for the specific item description (brand, model, color, etc.)
+                - Ask for a description of the incident in detail (what happened, where, how)
+                - Remember to ask for the purchase price of the item if applicable
                 
                 EXAMPLE INTERACTION:
                 User: "My bike was stolen today"
@@ -408,9 +413,15 @@ internal static class Demo11_ClaimsWorkflow
                    - contract_id
                    - date_of_loss
                    - date_reported
+                   - item_description (MANDATORY - must describe the specific item)
                    - detailed_description
-                5. Check for mandatory fields (like purchase_price, description, detailed description)
-                6. Check that the description is detailed enough to identify the item damaged or stolen.
+                   - purchase_price (if applicable)
+                5. CRITICAL: Verify item_description is NOT empty and contains specific details
+                   (e.g., brand, model, color for a bike; make/model for electronics)
+                6. Check that detailed_description explains what happened (the incident)
+                7. VERIFY that item_description and detailed_description are different:
+                   - item_description: WHAT (the item itself)
+                   - detailed_description: HOW (what happened to it)
                 
                 OUTPUT FORMAT:
                 Return a ValidationResult JSON with:
@@ -727,25 +738,82 @@ internal static class Demo11_ClaimsWorkflow
                 Console.ResetColor();
                 Console.WriteLine();
                 
-                // Print the complete claim composition
-                Console.WriteLine(new string('─', 80));
-                Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.WriteLine("📋 CLAIM COMPOSITION");
-                Console.ResetColor();
-                Console.WriteLine(new string('─', 80));
-                Console.WriteLine();
-                
                 var jsonOptions = new JsonSerializerOptions 
                 { 
                     WriteIndented = true,
                     DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
                 };
-                var readableJson = JsonSerializer.Serialize(validation, jsonOptions);
                 
+                // ========== 1. CLAIM COMPOSITION (What we've built) ==========
+                Console.WriteLine(new string('─', 80));
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine("📋 CLAIM COMPOSITION (Gathered Information)");
+                Console.ResetColor();
+                Console.WriteLine(new string('─', 80));
+                Console.WriteLine();
+                
+                // Build the complete claim from state
+                var completeClaim = new
+                {
+                    customer = state.Customer,
+                    contract_id = state.ContractId,
+                    claim_details = state.ClaimDraft,
+                    status = state.Status.ToString(),
+                    intake_iterations = state.IntakeIteration
+                };
+                
+                var claimJson = JsonSerializer.Serialize(completeClaim, jsonOptions);
                 Console.ForegroundColor = ConsoleColor.White;
-                Console.WriteLine(readableJson);
+                Console.WriteLine(claimJson);
                 Console.ResetColor();
                 Console.WriteLine();
+                
+                // ========== 2. CLAIM VALIDATION (What the validator resolved) ==========
+                Console.WriteLine(new string('─', 80));
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("✅ CLAIM VALIDATION (Validator Output)");
+                Console.ResetColor();
+                Console.WriteLine(new string('─', 80));
+                Console.WriteLine();
+                
+                var validationJson = JsonSerializer.Serialize(validation, jsonOptions);
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.WriteLine(validationJson);
+                Console.ResetColor();
+                Console.WriteLine();
+                
+                // ========== 3. CONVERSATION HISTORY (Legal/Audit Trail) ==========
+                Console.WriteLine(new string('─', 80));
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("💬 CONVERSATION HISTORY (Audit Trail)");
+                Console.ResetColor();
+                Console.WriteLine(new string('─', 80));
+                Console.WriteLine();
+                
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.WriteLine($"Total messages exchanged: {state.ConversationHistory.Count}");
+                Console.WriteLine();
+                
+                int msgNum = 1;
+                foreach (var msg in state.ConversationHistory)
+                {
+                    var roleColor = msg.Role.Value switch
+                    {
+                        "user" => ConsoleColor.Cyan,
+                        "assistant" => ConsoleColor.Yellow,
+                        "system" => ConsoleColor.DarkGray,
+                        _ => ConsoleColor.White
+                    };
+                    
+                    Console.ForegroundColor = roleColor;
+                    Console.WriteLine($"[{msgNum}] {msg.Role.Value.ToUpperInvariant()}:");
+                    Console.ResetColor();
+                    Console.WriteLine($"    {msg.Text}");
+                    Console.WriteLine();
+                    msgNum++;
+                }
+                Console.ResetColor();
+                
                 Console.WriteLine(new string('─', 80));
                 Console.WriteLine();
             }

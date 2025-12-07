@@ -62,8 +62,8 @@ Console.WriteLine("Hello, Microsoft Agent Framework!");
 //await Demo10_DevMasterMultiMCP.Execute();
 
 // Demo 11: Claims Workflow - Choose your mode!
-await Demo11_ClaimsWorkflow.Execute();              // Console mode (interactive)
-//await Demo12_ClaimsFraudDetection.Execute();       // Fraud detection with fan-out/fan-in ✅ WORKS!
+//await Demo11_ClaimsWorkflow.Execute();              // Console mode (interactive)
+await Demo12_ClaimsFraudDetection.Execute();       // Fraud detection with fan-out/fan-in ✅ WORKS!
 
 // ════════════════════════════════════════════════════════════════════════════════
 // TESTS - Minimal test cases to understand workflow patterns

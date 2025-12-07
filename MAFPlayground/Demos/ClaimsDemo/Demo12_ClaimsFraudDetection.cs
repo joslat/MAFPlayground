@@ -6,13 +6,14 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Azure.AI.OpenAI;
+using MAFPlayground.Demos.ClaimsDemo;
 using MAFPlayground.Utils;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Workflows;
 using Microsoft.Agents.AI.Workflows.Reflection;
 using Microsoft.Extensions.AI;
 
-namespace MAFPlayground.Demos;
+namespace MAFPlayground.Demos.ClaimsDemo;
 
 /// <summary>
 /// Demo 12: Claims Fraud Detection Workflow
@@ -48,21 +49,7 @@ namespace MAFPlayground.Demos;
 internal static class Demo12_ClaimsFraudDetection
 {
     // --------------------- Shared state ---------------------
-    private sealed class FraudAnalysisState
-    {
-        public ValidationResult? OriginalClaim { get; set; }
-        public DataReviewResult? DataReview { get; set; }
-        public string ClaimType { get; set; } = "";
-        public string ClaimSubType { get; set; } = "";
-        
-        // Fraud detection findings (fan-in from 3 agents)
-        public OSINTFinding? OSINTFinding { get; set; }
-        public UserHistoryFinding? UserHistoryFinding { get; set; }
-        public TransactionFraudFinding? TransactionFraudFinding { get; set; }
-        
-        // Final decision
-        public FraudDecision? FraudDecision { get; set; }
-    }
+    // FraudAnalysisState is now in SharedClaimsData.cs (shared across demos)
 
     private static class FraudStateShared
     {
@@ -80,151 +67,13 @@ internal static class Demo12_ClaimsFraudDetection
         => context.QueueStateUpdateAsync(FraudStateShared.Key, state, scopeName: FraudStateShared.Scope);
 
     // --------------------- Data contracts ---------------------
-    
-    /// <summary>Validation result from Demo11 - extended for fraud analysis</summary>
-    [Description("Validated claim ready for fraud detection")]
-    public sealed class ValidationResult
-    {
-        [JsonPropertyName("ready")]
-        public bool Ready { get; set; }
-        
-        [JsonPropertyName("customer_id")]
-        public string? CustomerId { get; set; }
-        
-        [JsonPropertyName("contract_id")]
-        public string? ContractId { get; set; }
-        
-        [JsonPropertyName("normalized_claim_type")]
-        public string? NormalizedClaimType { get; set; }
-        
-        [JsonPropertyName("normalized_claim_sub_type")]
-        public string? NormalizedClaimSubType { get; set; }
-        
-        [JsonPropertyName("date_of_loss")]
-        public string? DateOfLoss { get; set; }
-        
-        [JsonPropertyName("detailed_description")]
-        public string? DetailedDescription { get; set; }
-        
-        [JsonPropertyName("purchase_price")]
-        public decimal? PurchasePrice { get; set; }
-    }
-
-    [Description("Initial data quality review result")]
-    public sealed class DataReviewResult
-    {
-        [JsonPropertyName("data_complete")]
-        [Description("Whether all required fields are present and well-formed")]
-        public bool DataComplete { get; set; }
-        
-        [JsonPropertyName("quality_score")]
-        [Description("Overall data quality score 0-100")]
-        public int QualityScore { get; set; }
-        
-        [JsonPropertyName("concerns")]
-        [Description("List of data quality concerns")]
-        public List<string> Concerns { get; set; } = new();
-        
-        [JsonPropertyName("proceed")]
-        [Description("Whether to proceed with fraud analysis")]
-        public bool Proceed { get; set; }
-    }
-
-    [Description("OSINT (Open Source Intelligence) validation result")]
-    public sealed class OSINTFinding
-    {
-        [JsonPropertyName("item_found_online")]
-        [Description("Whether the reported stolen item was found listed for sale")]
-        public bool ItemFoundOnline { get; set; }
-        
-        [JsonPropertyName("marketplaces_checked")]
-        [Description("List of online marketplaces checked")]
-        public List<string> MarketplacesChecked { get; set; } = new();
-        
-        [JsonPropertyName("matching_listings")]
-        [Description("Details of matching listings found")]
-        public List<string> MatchingListings { get; set; } = new();
-        
-        [JsonPropertyName("fraud_indicator_score")]
-        [Description("Score 0-100 indicating likelihood of fraud")]
-        public int FraudIndicatorScore { get; set; }
-        
-        [JsonPropertyName("summary")]
-        [Description("Summary of OSINT findings")]
-        public string Summary { get; set; } = "";
-    }
-
-    [Description("Customer history and fraud score analysis")]
-    public sealed class UserHistoryFinding
-    {
-        [JsonPropertyName("previous_claims_count")]
-        [Description("Number of previous claims filed")]
-        public int PreviousClaimsCount { get; set; }
-        
-        [JsonPropertyName("suspicious_activity_detected")]
-        [Description("Whether suspicious patterns were detected")]
-        public bool SuspiciousActivityDetected { get; set; }
-        
-        [JsonPropertyName("customer_fraud_score")]
-        [Description("Historical fraud score for customer 0-100")]
-        public int CustomerFraudScore { get; set; }
-        
-        [JsonPropertyName("claim_history")]
-        [Description("Summary of past claims and their outcomes")]
-        public List<string> ClaimHistory { get; set; } = new();
-        
-        [JsonPropertyName("summary")]
-        [Description("Summary of user history analysis")]
-        public string Summary { get; set; } = "";
-    }
-
-    [Description("Transaction-level fraud scoring")]
-    public sealed class TransactionFraudFinding
-    {
-        [JsonPropertyName("anomaly_score")]
-        [Description("Transaction anomaly score 0-100")]
-        public int AnomalyScore { get; set; }
-        
-        [JsonPropertyName("red_flags")]
-        [Description("List of fraud red flags detected")]
-        public List<string> RedFlags { get; set; } = new();
-        
-        [JsonPropertyName("transaction_fraud_score")]
-        [Description("Overall transaction fraud score 0-100")]
-        public int TransactionFraudScore { get; set; }
-        
-        [JsonPropertyName("summary")]
-        [Description("Summary of transaction analysis")]
-        public string Summary { get; set; } = "";
-    }
-
-    [Description("Final fraud determination")]
-    public sealed class FraudDecision
-    {
-        [JsonPropertyName("is_fraud")]
-        [Description("Final determination: Is this likely fraud?")]
-        public bool IsFraud { get; set; }
-        
-        [JsonPropertyName("confidence_score")]
-        [Description("Confidence in the decision 0-100")]
-        public int ConfidenceScore { get; set; }
-        
-        [JsonPropertyName("combined_fraud_score")]
-        [Description("Combined fraud score from all sources 0-100")]
-        public int CombinedFraudScore { get; set; }
-        
-        [JsonPropertyName("recommendation")]
-        [Description("Recommended action (APPROVE, INVESTIGATE, REJECT)")]
-        public string Recommendation { get; set; } = "";
-        
-        [JsonPropertyName("reasoning")]
-        [Description("Explanation of the decision")]
-        public string Reasoning { get; set; } = "";
-        
-        [JsonPropertyName("key_factors")]
-        [Description("Key factors that influenced the decision")]
-        public List<string> KeyFactors { get; set; } = new();
-    }
+    // All fraud detection data contracts are now in SharedClaimsData.cs:
+    // - FraudAnalysisState (workflow state)
+    // - DataReviewResult
+    // - OSINTFinding
+    // - UserHistoryFinding
+    // - TransactionFraudFinding
+    // - FraudDecision
 
     // --------------------- Entry point ---------------------
     public static async Task Execute()
@@ -252,6 +101,9 @@ internal static class Demo12_ClaimsFraudDetection
             NormalizedClaimType = "Property",
             NormalizedClaimSubType = "BikeTheft",
             DateOfLoss = "2025-01-21",
+            DateReported = "2025-01-28",
+            ShortDescription = "Mountain bike stolen from grocery store",
+            ItemDescription = "Trek X-Caliber 8, red mountain bike, 21-speed",
             DetailedDescription = "My mountain bike was stolen from outside the grocery store. It was locked with a cable lock. The bike was a Trek X-Caliber 8, red color, worth approximately $1,200.",
             PurchasePrice = 1200.00m
         };
@@ -309,13 +161,15 @@ internal static class Demo12_ClaimsFraudDetection
 
     private static Workflow BuildFraudDetectionWorkflow(IChatClient chatClient)
     {
-        // Mock tools for fraud detection
+        // Fraud-specific mock tools (Demo12 only needs these)
         var tools = new List<AITool>
         {
             AIFunctionFactory.Create(FraudMockTools.CheckOnlineMarketplaces),
             AIFunctionFactory.Create(FraudMockTools.GetCustomerClaimHistory),
             AIFunctionFactory.Create(FraudMockTools.GetTransactionRiskProfile)
         };
+        // Note: Demo11 tools (GetCurrentDate, GetCustomerProfile, GetContract) not needed
+        // ValidationResult already contains customer_id, contract_id, and date_reported
 
         // Agents
         var dataReviewAgent = GetDataReviewAgent(chatClient);
@@ -520,9 +374,12 @@ internal static class Demo12_ClaimsFraudDetection
                 Contract ID: {claim.ContractId}
                 Type: {claim.NormalizedClaimType} - {claim.NormalizedClaimSubType}
                 Date of Loss: {claim.DateOfLoss}
+                Date Reported: {claim.DateReported}
+                Item: {claim.ItemDescription}
                 Value: ${claim.PurchasePrice}
                 
-                Description: {claim.DetailedDescription}
+                Short Description: {claim.ShortDescription}
+                Detailed Description: {claim.DetailedDescription}
                 """;
 
             var response = await _agent.RunAsync(prompt, cancellationToken: cancellationToken);
@@ -609,7 +466,8 @@ internal static class Demo12_ClaimsFraudDetection
             var prompt = $"""
                 Check if this stolen item is listed for sale online:
                 
-                Item: {claim.DetailedDescription}
+                Item Description: {claim.ItemDescription}
+                Detailed Context: {claim.DetailedDescription}
                 Value: ${claim.PurchasePrice}
                 Date of Loss: {claim.DateOfLoss}
                 

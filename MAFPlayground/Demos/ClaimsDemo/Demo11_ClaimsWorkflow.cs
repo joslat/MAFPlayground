@@ -67,15 +67,7 @@ internal static class Demo11_ClaimsWorkflow
     private const int MaxIntakeIterations = 15;
 
     // --------------------- Shared state ---------------------
-    private sealed class ClaimWorkflowState
-    {
-        public int IntakeIteration { get; set; } = 1;
-        public ClaimReadinessStatus Status { get; set; } = ClaimReadinessStatus.Draft;
-        public CustomerInfo? Customer { get; set; }
-        public ClaimDraft ClaimDraft { get; set; } = new();
-        public List<ChatMessage> ConversationHistory { get; } = new();
-        public string? ContractId { get; set; }
-    }
+    // ClaimWorkflowState is now in SharedClaimsData.cs (shared across demos)
 
     private static class ClaimStateShared
     {

@@ -103,6 +103,10 @@ public sealed class ValidationResult
     [Description("Date when the claim was reported")]
     public string? DateReported { get; set; }
     
+    [JsonPropertyName("short_description")]
+    [Description("Brief 1-2 sentence description of the claim")]
+    public string? ShortDescription { get; set; }
+    
     [JsonPropertyName("item_description")]
     [Description("Specific description of the item (e.g., 'Trek X-Caliber 8, red mountain bike')")]
     public string? ItemDescription { get; set; }

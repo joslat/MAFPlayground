@@ -361,6 +361,8 @@ internal static class Demo11_ClaimsWorkflow
                 - When user mentions dates relative to today (today, yesterday, last Tuesday), 
                   use get_current_date to calculate the exact date
                 - Once you have all required information, confirm and proceed
+                - Ask for a description of the incident in detail, and for the item stolen or damaged (if something has been stolen or damaged)
+                - Remember to ask for the price of the item if applicable
                 
                 EXAMPLE INTERACTION:
                 User: "My bike was stolen today"
@@ -386,8 +388,10 @@ internal static class Demo11_ClaimsWorkflow
                 Tools = tools,
                 ResponseFormat = ChatResponseFormat.ForJsonSchema<IntakeDecision>()
             }
-        });
+        })
+        {
 
+        };
     private static AIAgent GetClaimsReadyForProcessingAgent(IChatClient chat, List<AITool> tools) =>
         new ChatClientAgent(chat, new ChatClientAgentOptions
         {
@@ -405,7 +409,8 @@ internal static class Demo11_ClaimsWorkflow
                    - date_of_loss
                    - date_reported
                    - detailed_description
-                5. Check for recommended fields (like purchase_price)
+                5. Check for mandatory fields (like purchase_price, description, detailed description)
+                6. Check that the description is detailed enough to identify the item damaged or stolen.
                 
                 OUTPUT FORMAT:
                 Return a ValidationResult JSON with:
@@ -725,7 +730,7 @@ internal static class Demo11_ClaimsWorkflow
                 // Print the complete claim composition
                 Console.WriteLine(new string('─', 80));
                 Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.WriteLine("📋 CLAIM COMPOSITION - Collaboratively Built by Agents");
+                Console.WriteLine("📋 CLAIM COMPOSITION");
                 Console.ResetColor();
                 Console.WriteLine(new string('─', 80));
                 Console.WriteLine();

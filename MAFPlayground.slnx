@@ -2,6 +2,8 @@
   <Project Path="AgentOpenTelemetry/AgentOpenTelemetry.csproj" Id="4f9fe9e8-c28d-4b41-adb2-c7f8df660e9f" />
   <Project Path="AGUI.Client/AGUI.Client.csproj" />
   <Project Path="AGUI.Server/AGUI.Server.csproj" />
+  <Project Path="CourseSamples/CourseSamples.csproj" />
+  <Project Path="CourseSamples.Tests/CourseSamples.Tests.csproj" />
   <Project Path="MAFPlayground/MAFPlayground.csproj" />
   <Project Path="Shared/Shared.csproj" />
 </Solution>

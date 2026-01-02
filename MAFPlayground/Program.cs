@@ -1,6 +1,10 @@
 ﻿// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
 // Copyright (c) 2025 Jose Luis Latorre
 
+// NOTE: Chapter 2 CourseSamples are now in a separate project: CourseSamples (console app)
+// Run: dotnet run --project CourseSamples
+// Tests: dotnet test CourseSamples.Tests
+
 using MAFPlayground.Demos;
 using MAFPlayground.Demos.ClaimsDemo;
 using MAFPlayground.Samples;
@@ -63,7 +67,21 @@ Console.WriteLine("Hello, Microsoft Agent Framework!");
 
 // Demo 11: Claims Workflow - Choose your mode!
 //await Demo11_ClaimsWorkflow.Execute();              // Console mode (interactive)
-await Demo12_ClaimsFraudDetection.Execute();       // Fraud detection with fan-out/fan-in ✅ WORKS!
+//await Demo12_ClaimsFraudDetection.Execute();       // Fraud detection with fan-out/fan-in ✅ WORKS!
+
+// ════════════════════════════════════════════════════════════════════════════════
+// CHAPTER 2 COURSE SAMPLES - NOW IN SEPARATE PROJECT
+// ════════════════════════════════════════════════════════════════════════════════
+// The Chapter 2 samples have been moved to standalone projects for .NET 10 LTS:
+//
+//   📦 CourseSamples          - .NET 10 console app with interactive menu
+//   📦 CourseSamples.Tests    - .NET 10 xUnit test project
+//
+// To run samples:    dotnet run --project CourseSamples
+// To run tests:      dotnet test CourseSamples.Tests
+//
+// See CourseSamples/Program.cs for an interactive menu of all Chapter 2 samples.
+// ════════════════════════════════════════════════════════════════════════════════
 
 // ════════════════════════════════════════════════════════════════════════════════
 // TESTS - Minimal test cases to understand workflow patterns

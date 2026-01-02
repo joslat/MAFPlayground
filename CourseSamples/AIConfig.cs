@@ -3,6 +3,8 @@
 
 using Azure;
 
+namespace CourseSamples;
+
 public static class AIConfig
 {
     private static readonly Lazy<(Uri Endpoint, AzureKeyCredential KeyCredential)> s_values =

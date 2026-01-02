@@ -13,8 +13,4 @@
     <PackageReference Include="Microsoft.Agents.AI" Version="1.0.0-preview.251125.1" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Shared\Shared.csproj" />
-  </ItemGroup>
-
 </Project>

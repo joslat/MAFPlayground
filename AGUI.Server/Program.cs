@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 // Modified for MAFPlayground by Jose Luis Latorre
 
+using AGUI.Server;
 using AGUI.Server.Agents;
 using AGUI.Server.Agents.SharedStateCookingSimple;
 using Azure.AI.OpenAI;
@@ -9,7 +10,6 @@ using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Hosting.AGUI.AspNetCore;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
-using Shared;
 
 var builder = WebApplication.CreateBuilder(args);
 

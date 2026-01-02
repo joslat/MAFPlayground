@@ -6,7 +6,6 @@ using System.ComponentModel;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.AGUI;
 using Microsoft.Extensions.AI;
-using Shared;
 
 // Set console encoding to UTF-8 to support emojis and special characters
 Console.OutputEncoding = System.Text.Encoding.UTF8;

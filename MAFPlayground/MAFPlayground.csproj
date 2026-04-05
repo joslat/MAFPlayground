@@ -15,7 +15,7 @@
     <PackageReference Include="Microsoft.Agents.AI.Hosting.OpenAI" Version="1.0.0-alpha.260402.1" />
     <PackageReference Include="Microsoft.Agents.AI.OpenAI" Version="1.0.0" />
     <PackageReference Include="Microsoft.Agents.AI.Workflows" Version="1.0.0" />
-    <PackageReference Include="Microsoft.Agents.AI.Workflows.Generators" Version="1.0.0" />
+    <PackageReference Include="Microsoft.Agents.AI.Workflows.Generators" Version="1.0.0" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.4.0" />
     <PackageReference Include="ModelContextProtocol" Version="1.1.0" />
   </ItemGroup>

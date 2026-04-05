@@ -10,43 +10,43 @@
 
 | Phase | Task | Description | %Done | Reviewed | Notes |
 |-------|------|-------------|-------|----------|-------|
-| **1** | 1.1 | MAFPlayground.csproj package updates | 100% | | Added Workflows.Generators; updated all versions |
-| **1** | 1.2 | AgentOpenTelemetry.csproj package updates | 100% | | All versions aligned to GA ref |
-| **1** | 1.3 | AGUI.Server.csproj package updates | 100% | | AGUI Hosting still preview |
-| **1** | 1.4 | AGUI.Client.csproj package updates | 100% | | AGUI still preview |
+| **1** | 1.1 | MAFPlayground.csproj package updates | 100% | ✅ | Added Workflows.Generators (PrivateAssets=all); updated all versions |
+| **1** | 1.2 | AgentOpenTelemetry.csproj package updates | 100% | ✅ | All versions aligned to GA ref |
+| **1** | 1.3 | AGUI.Server.csproj package updates | 100% | ✅ | AGUI Hosting still preview |
+| **1** | 1.4 | AGUI.Client.csproj package updates | 100% | ✅ | AGUI still preview |
 | **1** | 1.R | Phase 1 build + review | 100% | ✅ | 10 errors (expected API), 197 warnings (obsolete executors) |
-| **2** | 2.1 | Rename `CreateAIAgent` → `AsAIAgent` | 100% | | 15 files updated |
-| **2** | 2.2 | Rename `AgentRunResponse` → `AgentResponse` | 100% | | 8 files updated |
-| **2** | 2.3 | Rename `StreamAsync` → `RunStreamingAsync` | 100% | | 26 files updated |
-| **2** | 2.4 | Rename `McpClientFactory` → `McpClient` | 100% | | 3 files updated |
-| **2** | 2.5 | Rename `.AsAgent(` → `.AsAIAgent(` on workflows | 100% | | 4 files updated |
-| **2** | 2.6 | Rename `ConfigureSubWorkflow` → `BindAsExecutor` | 100% | | 2 files, 7 occurrences |
+| **2** | 2.1 | Rename `CreateAIAgent` → `AsAIAgent` | 100% | ✅ | 15 files updated |
+| **2** | 2.2 | Rename `AgentRunResponse` → `AgentResponse` | 100% | ✅ | 8 files updated |
+| **2** | 2.3 | Rename `StreamAsync` → `RunStreamingAsync` | 100% | ✅ | 26 files updated |
+| **2** | 2.4 | Rename `McpClientFactory` → `McpClient` | 100% | ✅ | 3 files updated |
+| **2** | 2.5 | Rename `.AsAgent(` → `.AsAIAgent(` on workflows | 100% | ✅ | 4 files updated |
+| **2** | 2.6 | Rename `ConfigureSubWorkflow` → `BindAsExecutor` | 100% | ✅ | 2 files, 7 occurrences |
 | **2** | 2.R | Phase 2 build + review | 100% | ✅ | 7 unique errors (AgentThread/GetNewThread – Phase 3), warnings all IMessageHandler/ReflectingExecutor obsolete – Phase 6 |
-| **3** | 3.1 | Migrate `AgentThread`→`AgentSession` + `GetNewThread`→`CreateSessionAsync` | 100% | | 9 files type rename, 9 files method rename, Demo11 lazy init |
+| **3** | 3.1 | Migrate `AgentThread`→`AgentSession` + `GetNewThread`→`CreateSessionAsync` | 100% | ✅ | 9 files type rename, 9 files method rename, Demo11 lazy init |
 | **3** | 3.R | Phase 3 build + review | 100% | ✅ | 69 unique errors remain — all from Phase 4+ categories |
-| **4** | 4.1 | Migrate `ChatClientAgentOptions` positional ctors | 100% | | Sample04 ×2, Sample06 ×2, Sample08, Sample11, Sample22 ×5 |
-| **4** | 4.2 | Migrate `ChatClientAgentOptions { Instructions = }` → `ChatOptions` | 100% | | Demo02,03,04,08,09,10,11,12 + Sample19 (19 instances) |
-| **4** | 4.3 | Add `using OpenAI.Chat;` for ChatClient extensions | 100% | | 18 files + ChatMessage alias in Sample02,03 |
-| **4** | 4.4 | Rename `AgentRunUpdateEvent` → `AgentResponseUpdateEvent` | 100% | | 11 files |
-| **4** | 4.5 | Rename `FunctionApproval*` → `ToolApproval*` + ToolCall API | 100% | | Sample03 |
-| **4** | 4.6 | Rename `AddFanInEdge` → `AddFanInBarrierEdge` | 100% | | 16 files |
-| **4** | 4.7 | Fix `AddEdge<T>` ambiguity | 100% | | Sample21 ×2 — explicit condition/idempotent |
+| **4** | 4.1 | Migrate `ChatClientAgentOptions` positional ctors | 100% | ✅ | Sample04 ×2, Sample06 ×2, Sample08, Sample11, Sample22 ×5 |
+| **4** | 4.2 | Migrate `ChatClientAgentOptions { Instructions = }` → `ChatOptions` | 100% | ✅ | Demo02,03,04,08,09,10,11,12 + Sample19 (19 instances) |
+| **4** | 4.3 | Add `using OpenAI.Chat;` for ChatClient extensions | 100% | ✅ | 18 files + ChatMessage alias in Sample02,03 |
+| **4** | 4.4 | Rename `AgentRunUpdateEvent` → `AgentResponseUpdateEvent` | 100% | ✅ | 11 files |
+| **4** | 4.5 | Rename `FunctionApproval*` → `ToolApproval*` + ToolCall API | 100% | ✅ | Sample03 |
+| **4** | 4.6 | Rename `AddFanInEdge` → `AddFanInBarrierEdge` | 100% | ✅ | 16 files |
+| **4** | 4.7 | Fix `AddEdge<T>` ambiguity | 100% | ✅ | Sample21 ×2 — explicit condition/idempotent |
 | **4** | 4.R | Phase 4 build + review | 100% | ✅ | 0 errors, 220 warnings (all CS0618 obsolete executors) |
-| **5** | 5.1 | Migrate `Deserialize<T>` → `RunAsync<T>` + `.Result` | 100% | | Demo11 ×2, Demo12 ×5 |
-| **5** | 5.2 | Migrate streaming `Deserialize` → `JsonSerializer.Deserialize` | 100% | | Sample04, Sample19 |
+| **5** | 5.1 | Migrate `Deserialize<T>` → `RunAsync<T>` + `.Result` | 100% | ✅ | Demo11 ×2, Demo12 ×5 |
+| **5** | 5.2 | Migrate streaming `Deserialize` → `JsonSerializer.Deserialize` | 100% | ✅ | Sample04, Sample19 |
 | **5** | 5.R | Phase 5 build + review | 100% | ✅ | Included in Phase 4.R above |
-| **6** | 6.1 | ReflectingExecutor → source-gen `[MessageHandler]` + `partial` + `Executor` base | 100% | | 20 files, 104 HandleAsync methods across ~96 executor classes |
-| **6** | 6.2 | Remove `IMessageHandler<>` interfaces + `using Reflection;` | 100% | | All 20 files; 3 files required manual fix for IMessageHandler with inline comments |
-| **6** | 6.3 | Add `partial` to outer static classes (nested executors) | 100% | | 12 files with nested private executors |
-| **6** | 6.4 | `AddFanInBarrierEdge` parameter order swap (sources, aggregator) | 100% | | 14 files — old `(agg, sources:)` → new `(sources, agg)` |
+| **6** | 6.1 | ReflectingExecutor → source-gen `[MessageHandler]` + `partial` + `Executor` base | 100% | ✅ | 20 files, 104 HandleAsync methods across ~96 executor classes |
+| **6** | 6.2 | Remove `IMessageHandler<>` interfaces + `using Reflection;` | 100% | ✅ | All 20 files + Sample15, Sample22 stale imports removed |
+| **6** | 6.3 | Add `partial` to outer static classes (nested executors) | 100% | ✅ | 12 files with nested private executors + Sample21 outer class fixed |
+| **6** | 6.4 | `AddFanInBarrierEdge` parameter order swap (sources, aggregator) | 100% | ✅ | 14 files — old `(agg, sources:)` → new `(sources, agg)` |
 | **6** | 6.R | Phase 6 build + review | 100% | ✅ | 0 errors, 9 warnings (all pre-existing: CS0162 unreachable, CS8604/CS8603 nullable) |
 | **7** | 7.1 | Sample20 DevUI & Hosting verification | 100% | ✅ | All DevUI/Hosting APIs verified working (MapDevUI, AddAIAgent, AddWorkflow, etc.) |
-| **7** | 7.2 | AgentOpenTelemetry project verification | 100% | ✅ | Already migrated via Phases 1-3 |
-| **7** | 7.3 | AGUI.Server project verification | 100% | ✅ | Already migrated via Phases 1-3 |
-| **7** | 7.4 | AGUI.Client project verification | 100% | ✅ | Already migrated via Phases 1-3 |
+| **7** | 7.2 | AgentOpenTelemetry project verification | 100% | ✅ | CreateSessionAsync, AgentSession, RunStreamingAsync — all GA |
+| **7** | 7.3 | AGUI.Server project verification | 100% | ✅ | AsAIAgent, AgentResponseUpdate, AgentSession — all GA |
+| **7** | 7.4 | AGUI.Client project verification | 100% | ✅ | AsAIAgent, CreateSessionAsync, AgentResponseUpdate — all GA |
 | **7** | 7.R | Phase 7 build + review | 100% | ✅ | All sub-projects build clean |
-| **8** | 8.1 | Commented samples evaluation | 100% | ✅ | Sample12C, Sample12, Sample07 sections — left commented per analysis recommendations |
-| **FIN** | FIN | Final full solution build + verification | 100% | ✅ | **0 errors, 9 warnings** (all pre-existing non-GA-related) |
+| **8** | 8.1 | Commented samples evaluation | 100% | ✅ | Sample12C, Sample12, Sample07 — fully commented, left as-is per analysis |
+| **FIN** | FIN | Final full solution build + verification | 100% | ✅ | **0 errors, 9 warnings** (all pre-existing non-GA-related). Zero CS0618 obsolete. |
 
 ---
 

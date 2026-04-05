@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace MAFPlayground.Samples;
 
-internal static class Sample21_FeatureComplianceReview
+internal static partial class Sample21_FeatureComplianceReview
 {
     public static async Task Execute()
     {

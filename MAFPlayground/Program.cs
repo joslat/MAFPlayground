@@ -12,6 +12,26 @@ using MAFPlayground.Samples.Sample22_WorkshopPlanner;
 using MAFPlayground.Tests;
 
 Console.WriteLine("Hello, Microsoft Agent Framework!");
+
+try
+{
+    await Demo07_MixedAgentsAndExecutors.Execute();
+}
+catch (Exception ex)
+{
+    Console.ForegroundColor = ConsoleColor.Red;
+    Console.WriteLine($"\n❌ ERROR: {ex.Message}");
+    Console.WriteLine($"\nStack Trace:\n{ex.StackTrace}");
+    if (ex.InnerException != null)
+    {
+        Console.WriteLine($"\nInner Exception: {ex.InnerException.Message}");
+        Console.WriteLine($"Inner Stack Trace:\n{ex.InnerException.StackTrace}");
+    }
+    Console.ResetColor();
+}
+
+return; // Exit after debugging
+
 //await Demo05_SubWorkflows.Execute();
 
 /// AGENT DEMOS AND SAMPLES
@@ -54,7 +74,7 @@ Console.WriteLine("Hello, Microsoft Agent Framework!");
 //await Sample14_SoftwareDevelopmentPipeline.Execute();
 //await Sample15_SoftwareDevelopmentPipelineWithSubWorkflows.Execute();
 //await Demo05_SubWorkflows.Execute();
-//await Demo07_MixedAgentsAndExecutors.Execute();
+//await Demo07_MixedAgentsAndExecutors.Execute(); // Moved to try-catch block at top
 
 //await Sample16_ChatWithWorkflow.Execute();
 //await Sample17_WriterCriticIterationWorkflow.Execute();

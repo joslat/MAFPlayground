@@ -1,4 +1,4 @@
-﻿// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
+// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
 // Copyright (c) 2025 Jose Luis
 
 using Azure.AI.OpenAI;
@@ -20,17 +20,17 @@ namespace MAFPlayground.Samples;
 /// without custom executors. The workflow routes based on the Critic's text output.
 /// 
 /// Workflow Flow:
-/// ┌─────────────┐
-/// │   Writer    │ → Creates/revises content
-/// └──────┬──────┘
-///        ↓
-/// ┌──────────────┐
-/// │   Critic     │ → Reviews and outputs decision
-/// └──────┬───────┘
-///        ↓
+/// +-------------+
+/// �   Writer    � ? Creates/revises content
+/// +-------------+
+///        ?
+/// +--------------+
+/// �   Critic     � ? Reviews and outputs decision
+/// +--------------+
+///        ?
 ///    [Decision - based on text]
-///        ├─ Contains "APPROVE" → Summary → [Output]
-///        └─ Otherwise → Writer (loop-back, max 3 iterations)
+///        +- Contains "APPROVE" ? Summary ? [Output]
+///        +- Otherwise ? Writer (loop-back, max 3 iterations)
 /// 
 /// Key Features:
 /// - Pure agent workflow (no custom executors)
@@ -87,7 +87,7 @@ internal static class Sample18_WriterCriticAgentsOnly
             new(ChatRole.User, "Write a 200-word blog post about AI ethics. Make it thoughtful and engaging.")
         };
 
-        await using StreamingRun run = await InProcessExecution.StreamAsync(workflow, initialMessages);
+        await using StreamingRun run = await InProcessExecution.RunStreamingAsync(workflow, initialMessages);
 
         // FIX: Send TurnToken to start the workflow!
         await run.TrySendMessageAsync(new TurnToken(emitEvents: true));
@@ -99,7 +99,7 @@ internal static class Sample18_WriterCriticAgentsOnly
         {
             switch (evt)
             {
-                case AgentRunUpdateEvent agentUpdate:
+                case AgentResponseUpdateEvent agentUpdate:
                     // Detect agent changes
                     if (agentUpdate.Update.AuthorName != currentAgent)
                     {
@@ -130,7 +130,7 @@ internal static class Sample18_WriterCriticAgentsOnly
                 case WorkflowOutputEvent output:
                     Console.WriteLine("\n\n" + new string('=', 80));
                     Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("✅ FINAL APPROVED CONTENT");
+                    Console.WriteLine("? FINAL APPROVED CONTENT");
                     Console.ResetColor();
                     Console.WriteLine(new string('=', 80));
                     Console.WriteLine();
@@ -146,13 +146,13 @@ internal static class Sample18_WriterCriticAgentsOnly
             }
         }
 
-        Console.WriteLine("\n✅ Sample 18 Complete!\n");
+        Console.WriteLine("\n? Sample 18 Complete!\n");
         Console.WriteLine("Key Concepts Demonstrated:");
-        Console.WriteLine("  ✓ Pure agent workflow (no custom executors)");
-        Console.WriteLine("  ✓ Routing based on ChatMessage text content");
-        Console.WriteLine("  ✓ Simpler implementation but less type-safe");
-        Console.WriteLine($"  ✓ Max iteration cap ({MaxIterations}) enforced by Critic");
-        Console.WriteLine("  ✓ Alternative approach for agent-only scenarios\n");    }
+        Console.WriteLine("  ? Pure agent workflow (no custom executors)");
+        Console.WriteLine("  ? Routing based on ChatMessage text content");
+        Console.WriteLine("  ? Simpler implementation but less type-safe");
+        Console.WriteLine($"  ? Max iteration cap ({MaxIterations}) enforced by Critic");
+        Console.WriteLine("  ? Alternative approach for agent-only scenarios\n");    }
 
     // --------------------- Helper method ---------------------
     

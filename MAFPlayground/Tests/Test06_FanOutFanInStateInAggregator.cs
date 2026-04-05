@@ -2,7 +2,6 @@
 // Copyright (c) 2025 Jose Luis
 
 using Microsoft.Agents.AI.Workflows;
-using Microsoft.Agents.AI.Workflows.Reflection;
 
 namespace MAFPlayground.Tests;
 
@@ -31,7 +30,7 @@ namespace MAFPlayground.Tests;
 /// - Test05: Class-based, executors use context state (async/await) ? FAILS
 /// - Test06: Class-based, AGGREGATOR uses context state ? Testing now...
 /// </summary>
-internal static class Test06_FanOutFanInStateInAggregator
+internal static partial class Test06_FanOutFanInStateInAggregator
 {
     // ?? TOGGLE FLAG: Where to use context state operations
     // false = No state operations anywhere (should work)
@@ -79,7 +78,7 @@ internal static class Test06_FanOutFanInStateInAggregator
         Console.WriteLine("EXECUTING TEST WORKFLOW");
         Console.WriteLine(new string('=', 80) + "\n");
 
-        await using StreamingRun run = await InProcessExecution.StreamAsync(workflow, "START");
+        await using StreamingRun run = await InProcessExecution.RunStreamingAsync(workflow, "START");
 
         bool receivedOutput = false;
         await foreach (WorkflowEvent evt in run.WatchStreamAsync())
@@ -140,7 +139,7 @@ internal static class Test06_FanOutFanInStateInAggregator
 
         return new WorkflowBuilder(startExecutor)
             .AddFanOutEdge(startExecutor, targets: [executorA, executorB])
-            .AddFanInEdge(aggregator, sources: [executorA, executorB])
+            .AddFanInBarrierEdge([executorA, executorB], aggregator)
             .AddEdge(aggregator, finalExecutor)
             .WithOutputFrom(finalExecutor)
             .Build();
@@ -148,12 +147,11 @@ internal static class Test06_FanOutFanInStateInAggregator
 
     // --------------------- Executors ---------------------
 
-    private sealed class StartExecutor : 
-        ReflectingExecutor<StartExecutor>, 
-        IMessageHandler<string>
+    private sealed partial class StartExecutor : 
+        Executor
     {
         public StartExecutor() : base("StartExecutor") { }
-
+        [MessageHandler]
         public async ValueTask HandleAsync(string message, IWorkflowContext context, CancellationToken ct = default)
         {
             Console.WriteLine($"[StartExecutor] Broadcasting to ExecutorA and ExecutorB");
@@ -165,12 +163,11 @@ internal static class Test06_FanOutFanInStateInAggregator
     /// Executor A - NO state operations (just returns a value)
     /// This should work like Test01/Test02
     /// </summary>
-    private sealed class ExecutorA_NoState : 
-        ReflectingExecutor<ExecutorA_NoState>, 
-        IMessageHandler<string, string>
+    private sealed partial class ExecutorA_NoState : 
+        Executor
     {
         public ExecutorA_NoState() : base("ExecutorA") { }
-
+        [MessageHandler]
         public ValueTask<string> HandleAsync(string message, IWorkflowContext context, CancellationToken ct = default)
         {
             Console.WriteLine($"[ExecutorA] Processing: {message} (NO state operations)");
@@ -184,12 +181,11 @@ internal static class Test06_FanOutFanInStateInAggregator
     /// Executor B - NO state operations (just returns a value)
     /// This should work like Test01/Test02
     /// </summary>
-    private sealed class ExecutorB_NoState : 
-        ReflectingExecutor<ExecutorB_NoState>, 
-        IMessageHandler<string, string>
+    private sealed partial class ExecutorB_NoState : 
+        Executor
     {
         public ExecutorB_NoState() : base("ExecutorB") { }
-
+        [MessageHandler]
         public ValueTask<string> HandleAsync(string message, IWorkflowContext context, CancellationToken ct = default)
         {
             Console.WriteLine($"[ExecutorB] Processing: {message} (NO state operations)");
@@ -203,14 +199,13 @@ internal static class Test06_FanOutFanInStateInAggregator
     /// Aggregator - USES context state operations
     /// Let's see if state operations work HERE instead of in the fan-out executors
     /// </summary>
-    private sealed class AggregatorWithState : 
-        ReflectingExecutor<AggregatorWithState>, 
-        IMessageHandler<string, string>
+    private sealed partial class AggregatorWithState : 
+        Executor
     {
         private readonly List<string> _messages = new();
 
         public AggregatorWithState() : base("AggregatorExecutor") { }
-
+        [MessageHandler]
         public async ValueTask<string> HandleAsync(string message, IWorkflowContext context, CancellationToken ct = default)
         {
             Console.WriteLine($"[Aggregator] ? HandleAsync CALLED!");
@@ -244,12 +239,11 @@ internal static class Test06_FanOutFanInStateInAggregator
         }
     }
 
-    private sealed class FinalExecutor : 
-        ReflectingExecutor<FinalExecutor>, 
-        IMessageHandler<string, string>
+    private sealed partial class FinalExecutor : 
+        Executor
     {
         public FinalExecutor() : base("FinalExecutor") { }
-
+        [MessageHandler]
         public ValueTask<string> HandleAsync(string message, IWorkflowContext context, CancellationToken ct = default)
         {
             Console.WriteLine($"[FinalExecutor] ? Received aggregated result!");

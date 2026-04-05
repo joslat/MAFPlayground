@@ -1,17 +1,16 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
+// Copyright (c) Microsoft. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 using Azure.AI.OpenAI;
 using MAFPlayground.Utils;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Workflows;
-using Microsoft.Agents.AI.Workflows.Reflection;
 using Microsoft.Extensions.AI;
 
 namespace MAFPlayground.Samples;
 
 /// <summary>
-/// This sample demonstrates how to convert a workflow into an agent using .AsAgent(),
+/// This sample demonstrates how to convert a workflow into an agent using .AsAIAgent(),
 /// allowing you to interact with a workflow as if it were a single AI agent.
 ///
 /// The workflow created here uses two language agents (French and English) to process
@@ -29,7 +28,7 @@ namespace MAFPlayground.Samples;
 /// - Foundational workflow and agent samples should be completed first.
 /// - An Azure OpenAI chat completion deployment must be configured.
 /// </remarks>
-internal static class Sample10_WorkflowAsAgent
+internal static partial class Sample10_WorkflowAsAgent
 {
     public static async Task Execute()
     {
@@ -48,14 +47,14 @@ internal static class Sample10_WorkflowAsAgent
         WorkflowVisualizerTool.PrintAll(workflow, "Bilingual Workflow (before conversion to agent)");
 
         // Convert the workflow to an agent - this is the key capability!
-        AIAgent workflowAgent = workflow.AsAgent(
+        AIAgent workflowAgent = workflow.AsAIAgent(
             "bilingual-workflow-agent",
             "Agent that responds in both French and English");
 
-        // Create a thread for conversation context
-        AgentThread thread = workflowAgent.GetNewThread();
+        // Create a session for conversation context
+        var session = await workflowAgent.CreateSessionAsync();
 
-        Console.WriteLine("\n✨ The workflow has been converted to an agent!");
+        Console.WriteLine("\n? The workflow has been converted to an agent!");
         Console.WriteLine("You can now interact with it like any other agent.\n");
 
         // Start an interactive loop to demonstrate the workflow-as-agent
@@ -71,7 +70,7 @@ internal static class Sample10_WorkflowAsAgent
                 break;
             }
 
-            await ProcessInputAsync(workflowAgent, thread, input);
+            await ProcessInputAsync(workflowAgent, session, input);
         }
     }
 
@@ -93,7 +92,7 @@ internal static class Sample10_WorkflowAsAgent
         // Build the workflow: fan-out to both agents, then fan-in to aggregate
         return new WorkflowBuilder(startExecutor)
             .AddFanOutEdge(startExecutor, targets: [ frenchAgent, englishAgent])
-            .AddFanInEdge(aggregationExecutor, sources: [frenchAgent, englishAgent ])
+            .AddFanInBarrierEdge([frenchAgent, englishAgent ], aggregationExecutor)
             .WithOutputFrom(aggregationExecutor)
             .Build();
     }
@@ -114,11 +113,11 @@ internal static class Sample10_WorkflowAsAgent
     /// Processes user input and displays streaming responses from the workflow-agent.
     /// Buffers updates by message ID to correctly display multiple interleaved responses.
     /// </summary>
-    private static async Task ProcessInputAsync(AIAgent agent, AgentThread thread, string input)
+    private static async Task ProcessInputAsync(AIAgent agent, AgentSession session, string input)
     {
-        Dictionary<string, List<AgentRunResponseUpdate>> buffer = new();
+        Dictionary<string, List<AgentResponseUpdate>> buffer = new();
         
-        await foreach (AgentRunResponseUpdate update in agent.RunStreamingAsync(input, thread).ConfigureAwait(false))
+        await foreach (AgentResponseUpdate update in agent.RunStreamingAsync(input, session).ConfigureAwait(false))
         {
             if (update.MessageId is null)
             {
@@ -129,9 +128,9 @@ internal static class Sample10_WorkflowAsAgent
             Console.Clear();
 
             // Buffer updates by message ID
-            if (!buffer.TryGetValue(update.MessageId, out List<AgentRunResponseUpdate>? value))
+            if (!buffer.TryGetValue(update.MessageId, out List<AgentResponseUpdate>? value))
             {
-                value = new List<AgentRunResponseUpdate>();
+                value = new List<AgentResponseUpdate>();
                 buffer[update.MessageId] = value;
             }
             value.Add(update);
@@ -149,15 +148,15 @@ internal static class Sample10_WorkflowAsAgent
     /// <summary>
     /// Executor that starts the concurrent processing by sending messages to the agents.
     /// </summary>
-    private sealed class ConcurrentStartExecutor : 
-        ReflectingExecutor<ConcurrentStartExecutor>, 
-        IMessageHandler<List<ChatMessage>>
+    private sealed partial class ConcurrentStartExecutor : 
+        Executor
     {
         public ConcurrentStartExecutor() : base("ConcurrentStartExecutor") { }
 
         /// <summary>
         /// Broadcasts the message to all connected agents and sends a turn token to start processing.
         /// </summary>
+        [MessageHandler]
         public async ValueTask HandleAsync(List<ChatMessage> message, IWorkflowContext context, CancellationToken cancellationToken = default)
         {
             // Broadcast the message to all connected agents (they will queue it)
@@ -171,9 +170,8 @@ internal static class Sample10_WorkflowAsAgent
     /// <summary>
     /// Executor that aggregates the results from the concurrent agents.
     /// </summary>
-    private sealed class ConcurrentAggregationExecutor : 
-        ReflectingExecutor<ConcurrentAggregationExecutor>, 
-        IMessageHandler<ChatMessage>
+    private sealed partial class ConcurrentAggregationExecutor : 
+        Executor
     {
         public ConcurrentAggregationExecutor() : base("ConcurrentAggregationExecutor") { }
 
@@ -182,6 +180,7 @@ internal static class Sample10_WorkflowAsAgent
         /// <summary>
         /// Collects messages from the agents and yields output when both have responded.
         /// </summary>
+        [MessageHandler]
         public async ValueTask HandleAsync(ChatMessage message, IWorkflowContext context, CancellationToken cancellationToken = default)
         {
             this._messages.Add(message);

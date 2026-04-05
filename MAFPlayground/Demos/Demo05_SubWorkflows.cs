@@ -1,11 +1,10 @@
-﻿// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH OR MIT
+// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH OR MIT
 // Copyright (c) 2025 Jose Luis Latorre
 // Note: this demo has been ported to the Microsoft Agent Framework from here and you can find it as a sample.
 
 using MAFPlayground.Utils;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Workflows;
-using Microsoft.Agents.AI.Workflows.Reflection;
 using Microsoft.Extensions.AI;
 
 namespace MAFPlayground.Samples;
@@ -15,8 +14,8 @@ namespace MAFPlayground.Samples;
 /// workflows into agents and using them as executors in larger workflows.
 ///
 /// Workflow composition hierarchy:
-/// 1. Build a "Text Processing Sub-Workflow" (uppercase → reverse → append suffix)
-/// 2. Convert it to an agent using .AsAgent()
+/// 1. Build a "Text Processing Sub-Workflow" (uppercase ? reverse ? append suffix)
+/// 2. Convert it to an agent using .AsAIAgent()
 /// 3. Build a "Main Workflow" that uses the sub-workflow agent as an executor
 /// 4. Demonstrate that workflows can be nested and reused as modular components
 ///
@@ -35,7 +34,7 @@ internal static class Demo05_SubWorkflows
         // ====================================
         // Step 1: Build a simple text processing sub-workflow
         // ====================================
-        Console.WriteLine("Building sub-workflow: Uppercase → Reverse → Append Suffix...\n");
+        Console.WriteLine("Building sub-workflow: Uppercase ? Reverse ? Append Suffix...\n");
 
 
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> reverseFunc =
@@ -58,7 +57,7 @@ internal static class Demo05_SubWorkflows
         // ISSUE: Why not do it identical to Python, with WorkflowExecutor that wraps a Workflow and exposes it as an Executor.
         // # wrap it as an executor
         // sub_exec = WorkflowExecutor(sub, id = "sub_workflow")
-        ExecutorBinding subWorkflowExecutor = subWorkflow.ConfigureSubWorkflow("subWorkflow");
+        ExecutorBinding subWorkflowExecutor = subWorkflow.BindAsExecutor("subWorkflow");
 
         // ====================================
         // Step 3: Build a main workflow that uses the sub-workflow 
@@ -74,7 +73,7 @@ internal static class Demo05_SubWorkflows
 
         // THis fails:
         var mainWorkflow = new WorkflowBuilder(prefixExecutor)
-            .AddEdge(prefixExecutor, subWorkflowExecutor)  // ✨ Use the sub-workflow agent as an executor!
+            .AddEdge(prefixExecutor, subWorkflowExecutor)  // ? Use the sub-workflow agent as an executor!
             .AddEdge(subWorkflowExecutor, postProcessExecutor)
             .WithOutputFrom(postProcessExecutor)
             .Build();
@@ -91,7 +90,7 @@ internal static class Demo05_SubWorkflows
         //// ====================================
         Console.WriteLine("Executing main workflow with input: 'Hello, Workflows!'\n");
 
-        await using StreamingRun run = await InProcessExecution.StreamAsync(mainWorkflow, "Hello, Workflows!");
+        await using StreamingRun run = await InProcessExecution.RunStreamingAsync(mainWorkflow, "Hello, Workflows!");
         await foreach (WorkflowEvent evt in run.WatchStreamAsync().ConfigureAwait(false))
         {
             if (evt is WorkflowOutputEvent output)
@@ -101,7 +100,7 @@ internal static class Demo05_SubWorkflows
             }
         }
 
-        Console.WriteLine("\n✅ Sample 09 Complete: Workflows can be composed hierarchically ");
+        Console.WriteLine("\n? Sample 09 Complete: Workflows can be composed hierarchically ");
     }
 }
 
@@ -112,14 +111,14 @@ internal static class Demo05_SubWorkflows
 /// <summary>
 /// Executor that converts text to uppercase.
 /// </summary>
-internal sealed class UppercaseExecutor : ReflectingExecutor<UppercaseExecutor>, IMessageHandler<string, string>
+internal sealed partial class UppercaseExecutor : Executor
 {
     public UppercaseExecutor() : base("UppercaseExecutor") { }
-
+    [MessageHandler]
     public ValueTask<string> HandleAsync(string message, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         var result = message.ToUpperInvariant();
-        Console.WriteLine($"[Uppercase] '{message}' → '{result}'");
+        Console.WriteLine($"[Uppercase] '{message}' ? '{result}'");
         return ValueTask.FromResult(result);
     }
 }
@@ -127,14 +126,14 @@ internal sealed class UppercaseExecutor : ReflectingExecutor<UppercaseExecutor>,
 /// <summary>
 /// Executor that reverses text.
 /// </summary>
-//internal sealed class ReverseExecutor : ReflectingExecutor<ReverseExecutor>, IMessageHandler<string, string>
+//internal sealed class ReverseExecutor : Executor
 //{
 //    public ReverseExecutor() : base("ReverseExecutor") { }
 
 //    public ValueTask<string> HandleAsync(string message, IWorkflowContext context, CancellationToken cancellationToken = default)
 //    {
 //        var result = string.Concat(message.Reverse());
-//        Console.WriteLine($"[Reverse] '{message}' → '{result}'");
+//        Console.WriteLine($"[Reverse] '{message}' ? '{result}'");
 //        return ValueTask.FromResult(result);
 //    }
 //}
@@ -142,7 +141,7 @@ internal sealed class UppercaseExecutor : ReflectingExecutor<UppercaseExecutor>,
 /// <summary>
 /// Executor that appends a suffix to text.
 /// </summary>
-internal sealed class AppendSuffixExecutor : ReflectingExecutor<AppendSuffixExecutor>, IMessageHandler<string, string>
+internal sealed partial class AppendSuffixExecutor : Executor
 {
     private readonly string _suffix;
 
@@ -150,11 +149,11 @@ internal sealed class AppendSuffixExecutor : ReflectingExecutor<AppendSuffixExec
     {
         _suffix = suffix;
     }
-
+    [MessageHandler]
     public ValueTask<string> HandleAsync(string message, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         var result = message + _suffix;
-        Console.WriteLine($"[AppendSuffix] '{message}' → '{result}'");
+        Console.WriteLine($"[AppendSuffix] '{message}' ? '{result}'");
         return ValueTask.FromResult(result);
     }
 }
@@ -162,7 +161,7 @@ internal sealed class AppendSuffixExecutor : ReflectingExecutor<AppendSuffixExec
 /// <summary>
 /// Executor that adds a prefix to text (used in main workflow).
 /// </summary>
-internal sealed class PrefixExecutor : ReflectingExecutor<PrefixExecutor>, IMessageHandler<string, string>
+internal sealed partial class PrefixExecutor : Executor
 {
     private readonly string _prefix;
 
@@ -170,11 +169,11 @@ internal sealed class PrefixExecutor : ReflectingExecutor<PrefixExecutor>, IMess
     {
         _prefix = prefix;
     }
-
+    [MessageHandler]
     public ValueTask<string> HandleAsync(string message, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         var result = _prefix + message;
-        Console.WriteLine($"[Prefix] '{message}' → '{result}'");
+        Console.WriteLine($"[Prefix] '{message}' ? '{result}'");
         return ValueTask.FromResult(result);
     }
 }
@@ -182,14 +181,14 @@ internal sealed class PrefixExecutor : ReflectingExecutor<PrefixExecutor>, IMess
 /// <summary>
 /// Executor that performs final post-processing (used in main workflow).
 /// </summary>
-internal sealed class PostProcessExecutor : ReflectingExecutor<PostProcessExecutor>, IMessageHandler<string, string>
+internal sealed partial class PostProcessExecutor : Executor
 {
     public PostProcessExecutor() : base("PostProcessExecutor") { }
-
+    [MessageHandler]
     public ValueTask<string> HandleAsync(string message, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         var result = $"[FINAL] {message} [END]";
-        Console.WriteLine($"[PostProcess] '{message}' → '{result}'");
+        Console.WriteLine($"[PostProcess] '{message}' ? '{result}'");
         return ValueTask.FromResult(result);
     }
 }

@@ -1,4 +1,4 @@
-﻿using Azure.AI.OpenAI;
+using Azure.AI.OpenAI;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using System;
@@ -49,7 +49,7 @@ When you receive feedback from the editor, carefully incorporate their suggestio
 Build upon the previous version of the story while addressing the editor's critiques."
         );
 
-        Console.WriteLine("✅ Writer agent created.\n");
+        Console.WriteLine("? Writer agent created.\n");
 
         // ====================================
         // Step 2: Run agent with a prompt
@@ -59,7 +59,7 @@ Build upon the previous version of the story while addressing the editor's criti
         Console.WriteLine("=".PadRight(80, '='));
         Console.WriteLine();
 
-        AgentRunResponse response = await writer.RunAsync("Write a short story about a haunted house.");
+        AgentResponse response = await writer.RunAsync("Write a short story about a haunted house.");
 
         Console.WriteLine(response.Text);
 
@@ -75,7 +75,7 @@ Build upon the previous version of the story while addressing the editor's criti
         Console.WriteLine("=".PadRight(80, '='));
         Console.WriteLine();
 
-        AgentRunResponse twistResponse = await writer.RunAsync(
+        AgentResponse twistResponse = await writer.RunAsync(
             "Write a twist ending for the haunted house story. Keep it under 100 words.");
 
         Console.WriteLine(twistResponse.Text);
@@ -84,7 +84,7 @@ Build upon the previous version of the story while addressing the editor's criti
         Console.WriteLine("=".PadRight(80, '='));
         Console.WriteLine();
 
-        Console.WriteLine("✅ Sample 12A Complete!");
+        Console.WriteLine("? Sample 12A Complete!");
         Console.WriteLine();
         Console.WriteLine("Key Takeaways:");
         Console.WriteLine("- ChatClientAgent works with Azure OpenAI");

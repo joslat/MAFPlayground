@@ -5,7 +5,6 @@ using Azure.AI.OpenAI;
 using Azure.Identity;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Workflows;
-using Microsoft.Agents.AI.Workflows.Reflection;
 using Microsoft.Extensions.AI;
 using MAFPlayground.Utils;
 
@@ -76,7 +75,7 @@ internal static class Demo06_ConcurrentWorkflowMixed
             .AddEdge(uppercase, reverse).WithOutputFrom(reverse)
             .AddEdge(reverse,startExecutor)
             .AddFanOutEdge(startExecutor, targets: [physicist, chemist])
-            .AddFanInEdge(aggregationExecutor, sources: [physicist, chemist])
+            .AddFanInBarrierEdge([physicist, chemist], aggregationExecutor)
             .WithOutputFrom(aggregationExecutor)
             .Build();
 
@@ -96,7 +95,7 @@ internal static class Demo06_ConcurrentWorkflowMixed
 
 
         // Execute the workflow in streaming mode
-        await using StreamingRun run = await InProcessExecution.StreamAsync(workflow, "What is temperature?");
+        await using StreamingRun run = await InProcessExecution.RunStreamingAsync(workflow, "What is temperature?");
         await foreach (WorkflowEvent evt in run.WatchStreamAsync().ConfigureAwait(false))
         {
             if (evt is WorkflowOutputEvent output)
@@ -110,13 +109,14 @@ internal static class Demo06_ConcurrentWorkflowMixed
 /// <summary>
 /// Executor that starts the concurrent processing by sending messages to the agents.
 /// </summary>
-internal sealed class ConcurrentStartExecutor : ReflectingExecutor<ConcurrentStartExecutor>, IMessageHandler<string>
+internal sealed partial class ConcurrentStartExecutor : Executor
 {
     public ConcurrentStartExecutor() : base("ConcurrentStartExecutor") { }
 
     /// <summary>
     /// Starts the concurrent processing by sending messages to the agents.
     /// </summary>
+    [MessageHandler]
     public async ValueTask HandleAsync(string message, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         // Broadcast the message to all connected agents. Receiving agents will queue
@@ -131,7 +131,7 @@ internal sealed class ConcurrentStartExecutor : ReflectingExecutor<ConcurrentSta
 /// <summary>
 /// Executor that aggregates the results from the concurrent agents.
 /// </summary>
-internal sealed class ConcurrentAggregationExecutor : ReflectingExecutor<ConcurrentAggregationExecutor>, IMessageHandler<ChatMessage>
+internal sealed partial class ConcurrentAggregationExecutor : Executor
 {
     public ConcurrentAggregationExecutor() : base("ConcurrentAggregationExecutor") { }
 
@@ -140,6 +140,7 @@ internal sealed class ConcurrentAggregationExecutor : ReflectingExecutor<Concurr
     /// <summary>
     /// Handles incoming messages from the agents and aggregates their responses.
     /// </summary>
+    [MessageHandler]
     public async ValueTask HandleAsync(ChatMessage message, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         this._messages.Add(message);
@@ -158,7 +159,7 @@ internal sealed class ConcurrentAggregationExecutor : ReflectingExecutor<Concurr
 /// <summary>
 /// First executor: converts input text to uppercase.
 /// </summary>
-internal sealed class UppercaseExecutor() : ReflectingExecutor<UppercaseExecutor>("UppercaseExecutor"), IMessageHandler<string, string>
+internal sealed partial class UppercaseExecutor() : Executor("UppercaseExecutor")
 {
     /// <summary>
     /// Processes the input message by converting it to uppercase.
@@ -168,6 +169,7 @@ internal sealed class UppercaseExecutor() : ReflectingExecutor<UppercaseExecutor
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.
     /// The default is <see cref="CancellationToken.None"/>.</param>
     /// <returns>The input text converted to uppercase</returns>
+    [MessageHandler]
     public async ValueTask<string> HandleAsync(string message, IWorkflowContext context, CancellationToken cancellationToken = default) =>
         message.ToUpperInvariant(); // The return value will be sent as a message along an edge to subsequent executors
 }
@@ -175,7 +177,7 @@ internal sealed class UppercaseExecutor() : ReflectingExecutor<UppercaseExecutor
 /// <summary>
 /// Second executor: reverses the input text and completes the workflow.
 /// </summary>
-internal sealed class ReverseTextExecutor() : ReflectingExecutor<ReverseTextExecutor>("ReverseTextExecutor"), IMessageHandler<string, string>
+internal sealed partial class ReverseTextExecutor() : Executor("ReverseTextExecutor")
 {
     /// <summary>
     /// Processes the input message by reversing the text.
@@ -185,6 +187,7 @@ internal sealed class ReverseTextExecutor() : ReflectingExecutor<ReverseTextExec
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests.
     /// The default is <see cref="CancellationToken.None"/>.</param>
     /// <returns>The input text reversed</returns>
+    [MessageHandler]
     public async ValueTask<string> HandleAsync(string message, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         // Because we do not suppress it, the returned result will be yielded as an output from this executor.

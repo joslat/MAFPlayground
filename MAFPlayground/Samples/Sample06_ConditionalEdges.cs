@@ -1,11 +1,10 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
+// Copyright (c) Microsoft. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 using Azure.AI.OpenAI;
 using MAFPlayground.Utils;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Workflows;
-using Microsoft.Agents.AI.Workflows.Reflection;
 using Microsoft.Extensions.AI;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -20,8 +19,8 @@ namespace MAFPlayground.Samples;
 ///
 /// 1. Spam Detection Agent analyzes incoming emails and classifies them as spam or legitimate
 /// 2. Based on the classification:
-///    - Legitimate emails → Email Assistant Agent → Send Email Executor
-///    - Spam emails → Handle Spam Executor (marks as spam)
+///    - Legitimate emails ? Email Assistant Agent ? Send Email Executor
+///    - Spam emails ? Handle Spam Executor (marks as spam)
 ///
 /// Edge conditions enable workflows to make intelligent routing decisions, allowing you to
 /// build sophisticated automation that responds differently based on the data being processed.
@@ -78,7 +77,7 @@ internal static class Sample06_ConditionalEdges
 
         // Execute the workflow
         //await using Run run2 = await InProcessExecution.RunAsync(workflow, new ChatMessage(ChatRole.User, email));
-        await using StreamingRun run = await InProcessExecution.StreamAsync(workflow, new ChatMessage(ChatRole.User, email));
+        await using StreamingRun run = await InProcessExecution.RunStreamingAsync(workflow, new ChatMessage(ChatRole.User, email));
         await run.TrySendMessageAsync(new TurnToken(emitEvents: true));
         await foreach (WorkflowEvent evt in run.WatchStreamAsync().ConfigureAwait(false))
         {
@@ -102,10 +101,11 @@ internal static class Sample06_ConditionalEdges
     /// </summary>
     /// <returns>A ChatClientAgent configured for spam detection</returns>
     private static ChatClientAgent GetSpamDetectionAgent(IChatClient chatClient) =>
-        new(chatClient, new ChatClientAgentOptions(instructions: "You are a spam detection assistant that identifies spam emails.")
+        new(chatClient, new ChatClientAgentOptions
         {
-            ChatOptions = new()
+            ChatOptions = new ChatOptions
             {
+                Instructions = "You are a spam detection assistant that identifies spam emails.",
                 ResponseFormat = ChatResponseFormat.ForJsonSchema<DetectionResult>()
             }
         });
@@ -115,10 +115,11 @@ internal static class Sample06_ConditionalEdges
     /// </summary>
     /// <returns>A ChatClientAgent configured for email assistance</returns>
     private static ChatClientAgent GetEmailAssistantAgent(IChatClient chatClient) =>
-        new(chatClient, new ChatClientAgentOptions(instructions: "You are an email assistant that helps users draft responses to emails with professionalism.")
+        new(chatClient, new ChatClientAgentOptions
         {
-            ChatOptions = new()
+            ChatOptions = new ChatOptions
             {
+                Instructions = "You are an email assistant that helps users draft responses to emails with professionalism.",
                 ResponseFormat = ChatResponseFormat.ForJsonSchema<EmailResponse>()
             }
         });
@@ -163,7 +164,7 @@ internal sealed class Email
 /// <summary>
 /// Executor that detects spam using an AI agent.
 /// </summary>
-internal sealed class SpamDetectionExecutor : ReflectingExecutor<SpamDetectionExecutor>, IMessageHandler<ChatMessage, DetectionResult>
+internal sealed partial class SpamDetectionExecutor : Executor
 {
     private readonly AIAgent _spamDetectionAgent;
 
@@ -175,7 +176,7 @@ internal sealed class SpamDetectionExecutor : ReflectingExecutor<SpamDetectionEx
     {
         this._spamDetectionAgent = spamDetectionAgent;
     }
-
+    [MessageHandler]
     public async ValueTask<DetectionResult> HandleAsync(ChatMessage message, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         // Generate a random email ID and store the email content to the shared state
@@ -208,7 +209,7 @@ public sealed class EmailResponse
 /// <summary>
 /// Executor that assists with email responses using an AI agent.
 /// </summary>
-internal sealed class EmailAssistantExecutor : ReflectingExecutor<EmailAssistantExecutor>, IMessageHandler<DetectionResult, EmailResponse>
+internal sealed partial class EmailAssistantExecutor : Executor
 {
     private readonly AIAgent _emailAssistantAgent;
 
@@ -220,7 +221,7 @@ internal sealed class EmailAssistantExecutor : ReflectingExecutor<EmailAssistant
     {
         this._emailAssistantAgent = emailAssistantAgent;
     }
-
+    [MessageHandler]
     public async ValueTask<EmailResponse> HandleAsync(DetectionResult message, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         if (message.IsSpam)
@@ -243,13 +244,14 @@ internal sealed class EmailAssistantExecutor : ReflectingExecutor<EmailAssistant
 /// <summary>
 /// Executor that sends emails.
 /// </summary>
-internal sealed class SendEmailExecutor : ReflectingExecutor<SendEmailExecutor>, IMessageHandler<EmailResponse>
+internal sealed partial class SendEmailExecutor : Executor
 {
     public SendEmailExecutor() : base("SendEmailExecutor") { }
 
     /// <summary>
     /// Simulate the sending of an email.
     /// </summary>
+    [MessageHandler]
     public async ValueTask HandleAsync(EmailResponse message, IWorkflowContext context, CancellationToken cancellationToken = default) =>
         await context.YieldOutputAsync($"Email sent: {message.Response}", cancellationToken);
 }
@@ -257,13 +259,14 @@ internal sealed class SendEmailExecutor : ReflectingExecutor<SendEmailExecutor>,
 /// <summary>
 /// Executor that handles spam messages.
 /// </summary>
-internal sealed class HandleSpamExecutor : ReflectingExecutor<HandleSpamExecutor>, IMessageHandler<DetectionResult>
+internal sealed partial class HandleSpamExecutor : Executor
 {
     public HandleSpamExecutor() : base("HandleSpamExecutor") { }
 
     /// <summary>
     /// Simulate the handling of a spam message.
     /// </summary>
+    [MessageHandler]
     public async ValueTask HandleAsync(DetectionResult message, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         if (message.IsSpam)

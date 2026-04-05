@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
+// Copyright (c) Microsoft. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 using Azure.AI.OpenAI;
@@ -6,6 +6,8 @@ using Azure.Identity;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using OpenAI;
+using OpenAI.Chat;
+using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
 
 namespace MAFPlayground.Samples;
 
@@ -19,7 +21,7 @@ internal static class Sample02_ImageAgent
         // Create the agent from the chat client
         AIAgent agent = azureClient
             .GetChatClient(AIConfig.ModelDeployment)
-            .CreateAIAgent(
+            .AsAIAgent(
                 instructions: "You are a helpful agent that can analyze images.", 
                 name: "ImageanAlyzer");
 

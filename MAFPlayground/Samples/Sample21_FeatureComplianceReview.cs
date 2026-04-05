@@ -3,7 +3,6 @@
 
 using MAFPlayground.Utils;
 using Microsoft.Agents.AI.Workflows;
-using Microsoft.Agents.AI.Workflows.Reflection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -65,7 +64,7 @@ internal static class Sample21_FeatureComplianceReview
             .AddEdge(kickoffExecutor, samplingExecutor)
             .AddEdge(samplingExecutor, featureLoopControllerExecutor)
             .AddEdge(featureLoopControllerExecutor, graphBuilderExecutor)
-            .AddEdge<GraphIterationCommand>(graphBuilderExecutor, graphIteratorExecutor)
+            .AddEdge<GraphIterationCommand>(graphBuilderExecutor, graphIteratorExecutor, condition: null, idempotent: false)
             .AddEdge<GraphIteratorDecision>(graphIteratorExecutor, nodeRouterExecutor,
                 condition: decision => decision is GraphIteratorDecision d && d.HasPendingNodes)
             .AddFanOutEdge(nodeRouterExecutor, targets: new ExecutorBinding[]
@@ -81,7 +80,7 @@ internal static class Sample21_FeatureComplianceReview
                 incidentReviewerExecutor,
                 documentReviewerExecutor
             })
-            .AddFanInEdge(sources: new ExecutorBinding[]
+            .AddFanInBarrierEdge(sources: new ExecutorBinding[]
             {
                 featureReviewerExecutor,
                 pbiReviewerExecutor,
@@ -94,7 +93,7 @@ internal static class Sample21_FeatureComplianceReview
                 incidentReviewerExecutor,
                 documentReviewerExecutor
             }, collectorExecutor)
-            .AddEdge<GraphIterationCommand>(collectorExecutor, graphIteratorExecutor)
+            .AddEdge<GraphIterationCommand>(collectorExecutor, graphIteratorExecutor, condition: null, idempotent: false)
             .AddEdge<GraphIteratorDecision>(graphIteratorExecutor, featureAggregatorExecutor,
                 condition: decision => decision is GraphIteratorDecision d && d.FeatureCompleted)
             .AddEdge(featureAggregatorExecutor, featuresAggregatorExecutor)
@@ -108,7 +107,7 @@ internal static class Sample21_FeatureComplianceReview
 
         WorkflowVisualizerTool.PrintAll(workflow, "Sample 21: Feature Compliance Review");
 
-        await using StreamingRun run = await InProcessExecution.StreamAsync(workflow, "StartReview");
+        await using StreamingRun run = await InProcessExecution.RunStreamingAsync(workflow, "StartReview");
         await foreach (WorkflowEvent evt in run.WatchStreamAsync().ConfigureAwait(false))
         {
             if (evt is WorkflowOutputEvent output)
@@ -163,12 +162,12 @@ internal sealed record FeatureSubReport(string FeatureId, string ChecklistSummar
 }
 internal sealed record PortfolioReport(string Narrative, string SamplingSummary, int FeaturesReviewed, int TotalDeviations, ProposedAction[] ActionBacklog);
 
-internal sealed class GraphBuilderExecutor : ReflectingExecutor<GraphBuilderExecutor>, IMessageHandler<FeatureWorkItem, GraphIterationCommand>
+internal sealed partial class GraphBuilderExecutor : Executor
 {
     private readonly FeatureGraphBuilder _builder = new();
 
     public GraphBuilderExecutor() : base("GraphBuilder") { }
-
+    [MessageHandler]
     public ValueTask<GraphIterationCommand> HandleAsync(FeatureWorkItem workItem, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         FeatureGraph graph = _builder.Build(workItem.FeatureId);
@@ -178,7 +177,7 @@ internal sealed class GraphBuilderExecutor : ReflectingExecutor<GraphBuilderExec
     }
 }
 
-internal sealed class GraphIteratorExecutor : ReflectingExecutor<GraphIteratorExecutor>, IMessageHandler<GraphIterationCommand, GraphIteratorDecision>
+internal sealed partial class GraphIteratorExecutor : Executor
 {
     private sealed class FeatureIterationState
     {
@@ -198,7 +197,7 @@ internal sealed class GraphIteratorExecutor : ReflectingExecutor<GraphIteratorEx
     private readonly Dictionary<string, FeatureIterationState> _states = new();
 
     public GraphIteratorExecutor() : base("GraphIterator") { }
-
+    [MessageHandler]
     public ValueTask<GraphIteratorDecision> HandleAsync(GraphIterationCommand command, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         if (command.Dispatch is not null)
@@ -259,10 +258,10 @@ internal sealed class GraphIteratorExecutor : ReflectingExecutor<GraphIteratorEx
     }
 }
 
-internal sealed class NodeSliceRouterExecutor : ReflectingExecutor<NodeSliceRouterExecutor>, IMessageHandler<GraphIteratorDecision, NodeSliceBundle>
+internal sealed partial class NodeSliceRouterExecutor : Executor
 {
     public NodeSliceRouterExecutor() : base("NodeSliceRouter") { }
-
+    [MessageHandler]
     public ValueTask<NodeSliceBundle> HandleAsync(GraphIteratorDecision decision, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         if (decision.NextSlice is null)
@@ -278,14 +277,14 @@ internal sealed class NodeSliceRouterExecutor : ReflectingExecutor<NodeSliceRout
     }
 }
 
-internal sealed class NodeFindingsCollectorExecutor : ReflectingExecutor<NodeFindingsCollectorExecutor>, IMessageHandler<NodeFindingsBundle, GraphIterationCommand>
+internal sealed partial class NodeFindingsCollectorExecutor : Executor
 {
     private readonly int _expectedBatches;
     private readonly List<NodeFindingsBundle> _pending = new();
 
     public NodeFindingsCollectorExecutor(int expectedBatches) : base("FindingsCollector")
         => _expectedBatches = expectedBatches;
-
+    [MessageHandler]
     public ValueTask<GraphIterationCommand> HandleAsync(NodeFindingsBundle bundle, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         _pending.Add(bundle);
@@ -304,7 +303,7 @@ internal sealed class NodeFindingsCollectorExecutor : ReflectingExecutor<NodeFin
     }
 }
 
-internal abstract class NodeReviewerExecutorBase<TExecutor> : ReflectingExecutor<TExecutor>, IMessageHandler<NodeSliceBundle, NodeFindingsBundle>
+internal abstract partial class NodeReviewerExecutorBase<TExecutor> : Executor
     where TExecutor : NodeReviewerExecutorBase<TExecutor>
 {
     private readonly NodeType _nodeType;
@@ -315,7 +314,7 @@ internal abstract class NodeReviewerExecutorBase<TExecutor> : ReflectingExecutor
         _label = executorLabel;
         _nodeType = nodeType;
     }
-
+    [MessageHandler]
     public ValueTask<NodeFindingsBundle> HandleAsync(NodeSliceBundle bundle, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         NodeFindings[] findings = bundle.Slices
@@ -501,10 +500,10 @@ internal sealed class DocumentReviewerExecutor : NodeReviewerExecutorBase<Docume
     }
 }
 
-internal sealed class FeatureAggregatorExecutor : ReflectingExecutor<FeatureAggregatorExecutor>, IMessageHandler<GraphIteratorDecision, FeatureSubReportBundle>
+internal sealed partial class FeatureAggregatorExecutor : Executor
 {
     public FeatureAggregatorExecutor() : base("FeatureAggregator") { }
-
+    [MessageHandler]
     public ValueTask<FeatureSubReportBundle> HandleAsync(GraphIteratorDecision decision, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         FeatureFindingsBundle bundle = decision.CompletedFeature ?? throw new InvalidOperationException("FeatureAggregator received decision without completed findings.");
@@ -525,13 +524,13 @@ internal sealed class FeatureAggregatorExecutor : ReflectingExecutor<FeatureAggr
     }
 }
 
-internal sealed class FeaturesAggregatorExecutor : ReflectingExecutor<FeaturesAggregatorExecutor>, IMessageHandler<FeatureSubReportBundle, object>
+internal sealed partial class FeaturesAggregatorExecutor : Executor
 {
     private readonly List<FeatureSubReport> _portfolioReports = new();
     private SamplingMetadata? _metadata;
 
     public FeaturesAggregatorExecutor() : base("FeaturesAggregator") { }
-
+    [MessageHandler]
     public ValueTask<object> HandleAsync(FeatureSubReportBundle bundle, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         _portfolioReports.AddRange(bundle.Reports);
@@ -553,10 +552,10 @@ internal sealed class FeaturesAggregatorExecutor : ReflectingExecutor<FeaturesAg
     }
 }
 
-internal sealed class PortfolioReporterExecutor : ReflectingExecutor<PortfolioReporterExecutor>, IMessageHandler<FeatureSubReportBundle, PortfolioReport>
+internal sealed partial class PortfolioReporterExecutor : Executor
 {
     public PortfolioReporterExecutor() : base("PortfolioReporter") { }
-
+    [MessageHandler]
     public ValueTask<PortfolioReport> HandleAsync(FeatureSubReportBundle bundle, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         PortfolioReport report = PortfolioReporter.Build(bundle);
@@ -565,10 +564,10 @@ internal sealed class PortfolioReporterExecutor : ReflectingExecutor<PortfolioRe
     }
 }
 
-internal sealed class SamplingExecutor : ReflectingExecutor<SamplingExecutor>, IMessageHandler<string, FeatureLoopSignal>
+internal sealed partial class SamplingExecutor : Executor
 {
     public SamplingExecutor() : base("SamplingExecutor") { }
-
+    [MessageHandler]
     public ValueTask<FeatureLoopSignal> HandleAsync(string message, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         var strata = new[] { "Area", "Risk", "Emergency" };
@@ -590,7 +589,7 @@ internal sealed class SamplingExecutor : ReflectingExecutor<SamplingExecutor>, I
     }
 }
 
-internal sealed class FeatureLoopControllerExecutor : ReflectingExecutor<FeatureLoopControllerExecutor>, IMessageHandler<FeatureLoopSignal, FeatureWorkItem>
+internal sealed partial class FeatureLoopControllerExecutor : Executor
 {
     private readonly Queue<string> _pendingFeatures = new();
     private SamplingMetadata? _metadata;
@@ -598,7 +597,7 @@ internal sealed class FeatureLoopControllerExecutor : ReflectingExecutor<Feature
     private int _currentIndex;
 
     public FeatureLoopControllerExecutor() : base("FeatureLoopController") { }
-
+    [MessageHandler]
     public ValueTask<FeatureWorkItem> HandleAsync(FeatureLoopSignal signal, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         if (signal.Seed is null && !signal.FeaturesPending)

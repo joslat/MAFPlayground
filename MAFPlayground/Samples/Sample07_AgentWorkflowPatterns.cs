@@ -1,4 +1,4 @@
-﻿//// Copyright (c) Microsoft. All rights reserved.
+//// Copyright (c) Microsoft. All rights reserved.
 //// SPDX-License-Identifier: MIT
 
 //using Azure.AI.OpenAI;
@@ -82,7 +82,7 @@
 //    private static async Task RunSequentialWorkflow(IChatClient chatClient)
 //    {
 //        Console.WriteLine("\n=== Sequential Translation Workflow ===");
-//        Console.WriteLine("Input will be translated through French → Spanish → English sequentially.\n");
+//        Console.WriteLine("Input will be translated through French ? Spanish ? English sequentially.\n");
 
 //        var workflow = AgentWorkflowBuilder.BuildSequential(
 //            from lang in new[] { "French", "Spanish", "English" }
@@ -218,12 +218,12 @@
 //    {
 //        string? lastExecutorId = null;
 
-//        await using StreamingRun run = await InProcessExecution.StreamAsync(workflow, messages);
+//        await using StreamingRun run = await InProcessExecution.RunStreamingAsync(workflow, messages);
 //        await run.TrySendMessageAsync(new TurnToken(emitEvents: true));
         
 //        await foreach (WorkflowEvent evt in run.WatchStreamAsync().ConfigureAwait(false))
 //        {
-//            if (evt is AgentRunUpdateEvent e)
+//            if (evt is AgentResponseUpdateEvent e)
 //            {
 //                if (e.ExecutorId != lastExecutorId)
 //                {

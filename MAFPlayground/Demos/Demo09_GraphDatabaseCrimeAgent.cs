@@ -1,13 +1,13 @@
-﻿// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
+// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
 // Copyright (c) 2025 Jose Luis Latorre & Zaid Zaim
 //
-// ✨ SPECIAL THANKS ✨
+// ? SPECIAL THANKS ?
 // This demo was created in collaboration with Zaid Zaim (@zaidzaim)
 // We have done this together as part of a series of discussions we
 // have had on MCP integration in regards to graph databases with Neo4j.
 // Zaid provided invaluable support with the Neo4j MCP integration,
 // environment configuration, and countless ideas.
-// His expertise in graph databases and MCP helped bring this detective to life! 🕵️
+// His expertise in graph databases and MCP helped bring this detective to life! ???
 //
 // Collaboration highlights:
 // - Neo4j crime database setup and configuration
@@ -15,7 +15,7 @@
 // - Brainstorming together on ideas and motivation for the demo and future
 //   talks based on this demo
 //
-// Thanks Zaid! 🙌
+// Thanks Zaid! ??
 
 using Azure.AI.OpenAI;
 using Microsoft.Agents.AI;
@@ -58,7 +58,7 @@ internal static class Demo09_GraphDatabaseCrimeAgent
         Console.WriteLine("\n=== DEMO 09: THE GRAPH DATABASE DETECTIVE ===\n");
 
         // Step 1: Retrieve Neo4j configuration from environment variables
-        Console.WriteLine("🔐 Retrieving Neo4j database credentials...");
+        Console.WriteLine("?? Retrieving Neo4j database credentials...");
         var neo4jUri = Environment.GetEnvironmentVariable("NEO4J_URI");
         var neo4jUsername = Environment.GetEnvironmentVariable("NEO4J_USERNAME");
         var neo4jPassword = Environment.GetEnvironmentVariable("NEO4J_PASSWORD");
@@ -69,23 +69,23 @@ internal static class Demo09_GraphDatabaseCrimeAgent
             string.IsNullOrWhiteSpace(neo4jPassword))
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("❌ ERROR: Neo4j environment variables are not properly configured!");
+            Console.WriteLine("? ERROR: Neo4j environment variables are not properly configured!");
             Console.WriteLine();
             Console.WriteLine("Please set the following environment variables:");
-            Console.WriteLine("  • NEO4J_URI - Database connection URI");
-            Console.WriteLine("  • NEO4J_USERNAME - Database username");
-            Console.WriteLine("  • NEO4J_PASSWORD - Database password");
-            Console.WriteLine("  • NEO4J_DATABASE - Database name (optional, defaults to 'neo4j')");
+            Console.WriteLine("  � NEO4J_URI - Database connection URI");
+            Console.WriteLine("  � NEO4J_USERNAME - Database username");
+            Console.WriteLine("  � NEO4J_PASSWORD - Database password");
+            Console.WriteLine("  � NEO4J_DATABASE - Database name (optional, defaults to 'neo4j')");
             Console.ResetColor();
             return;
         }
 
-        Console.WriteLine($"✅ Connected to: {neo4jUri}");
-        Console.WriteLine($"✅ Database: {neo4jDatabase}\n");
+        Console.WriteLine($"? Connected to: {neo4jUri}");
+        Console.WriteLine($"? Database: {neo4jDatabase}\n");
 
         // Step 2: Create an MCP client connected to the Neo4j MCP server
-        Console.WriteLine("🔌 Initializing connection to Neo4j MCP Server...");
-        await using var mcpClient = await McpClientFactory.CreateAsync(new StdioClientTransport(new()
+        Console.WriteLine("?? Initializing connection to Neo4j MCP Server...");
+        await using var mcpClient = await McpClient.CreateAsync(new StdioClientTransport(new()
         {
             Name = "Neo4jCrimeDatabaseMCP",
             Command = "uvx",
@@ -99,13 +99,13 @@ internal static class Demo09_GraphDatabaseCrimeAgent
             }
         }));
 
-        Console.WriteLine("✅ Connected to Neo4j Crime Database via MCP!\n");
+        Console.WriteLine("? Connected to Neo4j Crime Database via MCP!\n");
 
         // Step 3: Retrieve the list of tools available from the MCP server
-        Console.WriteLine("🔍 Discovering available database investigation tools...");
+        Console.WriteLine("?? Discovering available database investigation tools...");
         var mcpTools = await mcpClient.ListToolsAsync().ConfigureAwait(false);
         
-        Console.WriteLine($"✅ Holmsworth Marot has access to {mcpTools.Count} investigation tools!\n");
+        Console.WriteLine($"? Holmsworth Marot has access to {mcpTools.Count} investigation tools!\n");
 
         // Step 4: Create the Azure OpenAI chat client using the config
         var azureClient = new AzureOpenAIClient(AIConfig.Endpoint, AIConfig.KeyCredential);
@@ -119,8 +119,10 @@ internal static class Demo09_GraphDatabaseCrimeAgent
             new ChatClientAgentOptions
             {
                 Name = "HolmsworthMarot",
-                Instructions = """
-                    You are Holmsworth Marot 🕵️, a distinguished detective in the tradition of the great 
+                ChatOptions = new ChatOptions
+                {
+                    Instructions = """
+                    You are Holmsworth Marot ???, a distinguished detective in the tradition of the great 
                     Golden Age investigators - methodical, brilliant, and relentlessly logical in pursuit of truth!
                     
                     PERSONALITY & CHARACTER:
@@ -152,7 +154,7 @@ internal static class Demo09_GraphDatabaseCrimeAgent
                     - Cross-reference multiple data points for corroboration
                     
                     COMMUNICATION STYLE:
-                    - Structure your findings clearly: Suspects → Evidence → Connections → Conclusion
+                    - Structure your findings clearly: Suspects ? Evidence ? Connections ? Conclusion
                     - Use markdown for clarity when presenting complex relationships
                     - Highlight key discoveries with appropriate emphasis
                     - Translate technical database queries into investigative language
@@ -177,40 +179,38 @@ internal static class Demo09_GraphDatabaseCrimeAgent
                     "The truth is rarely pure and never simple, but it can always be found through 
                     careful observation, deductive reasoning, and systematic investigation."
                     """,
-                ChatOptions = new ChatOptions
-                {
                     // Cast MCP tools to AITool and add them to the agent
                     Tools = [.. mcpTools.Cast<AITool>()]
                 }
             });
 
-        // Step 6: Create a new thread for conversation
-        AgentThread thread = detective.GetNewThread();
+        // Step 6: Create a new session for conversation
+        var session = await detective.CreateSessionAsync();
 
         // Welcome message with detective flair
-        Console.WriteLine("═══════════════════════════════════════════════════════════════════════════════");
+        Console.WriteLine("-------------------------------------------------------------------------------");
         Console.ForegroundColor = ConsoleColor.Yellow;
-        Console.WriteLine("🎩 Good day! I am Holmsworth Marot, at your service for this investigation.");
+        Console.WriteLine("?? Good day! I am Holmsworth Marot, at your service for this investigation.");
         Console.ResetColor();
-        Console.WriteLine("═══════════════════════════════════════════════════════════════════════════════");
+        Console.WriteLine("-------------------------------------------------------------------------------");
         Console.WriteLine();
         Console.WriteLine("My deductive faculties and investigative methods are ready to unravel any mystery.");
         Console.WriteLine("With access to the graph database, no criminal connection shall remain hidden.\n");
-        Console.WriteLine("💡 I can assist you with:");
-        Console.WriteLine("   • 🔍 Investigating specific crimes and their details");
-        Console.WriteLine("   • 👥 Analyzing relationships between suspects and victims");
-        Console.WriteLine("   • 🗺️  Exploring patterns in crime locations and types");
-        Console.WriteLine("   • ⏰ Discovering temporal patterns in criminal activity");
-        Console.WriteLine("   • 🕸️  Uncovering hidden connections in criminal networks");
-        Console.WriteLine("   • 📊 Finding common motives and patterns across cases");
+        Console.WriteLine("?? I can assist you with:");
+        Console.WriteLine("   � ?? Investigating specific crimes and their details");
+        Console.WriteLine("   � ?? Analyzing relationships between suspects and victims");
+        Console.WriteLine("   � ???  Exploring patterns in crime locations and types");
+        Console.WriteLine("   � ? Discovering temporal patterns in criminal activity");
+        Console.WriteLine("   � ???  Uncovering hidden connections in criminal networks");
+        Console.WriteLine("   � ?? Finding common motives and patterns across cases");
         Console.WriteLine();
-        Console.WriteLine("📝 Examples of what you might ask:");
-        Console.WriteLine("   • 'Show me all unsolved murders in the database'");
-        Console.WriteLine("   • 'Who are the known associates of suspect John Smith?'");
-        Console.WriteLine("   • 'Find all crimes that occurred near the waterfront'");
-        Console.WriteLine("   • 'What connections exist between these two victims?'");
-        Console.WriteLine("   • 'Show me patterns in theft crimes over the last year'");
-        Console.WriteLine("   • 'Who has both a motive and opportunity for this crime?'");
+        Console.WriteLine("?? Examples of what you might ask:");
+        Console.WriteLine("   � 'Show me all unsolved murders in the database'");
+        Console.WriteLine("   � 'Who are the known associates of suspect John Smith?'");
+        Console.WriteLine("   � 'Find all crimes that occurred near the waterfront'");
+        Console.WriteLine("   � 'What connections exist between these two victims?'");
+        Console.WriteLine("   � 'Show me patterns in theft crimes over the last year'");
+        Console.WriteLine("   � 'Who has both a motive and opportunity for this crime?'");
         Console.WriteLine();
         Console.ForegroundColor = ConsoleColor.Cyan;
         Console.WriteLine("Describe the case you wish to investigate, and I shall apply systematic");
@@ -218,7 +218,7 @@ internal static class Demo09_GraphDatabaseCrimeAgent
         Console.ResetColor();
         Console.WriteLine();
         Console.WriteLine("Type 'q' or 'quit' to conclude our investigation.\n");
-        Console.WriteLine(new string('═', 80));
+        Console.WriteLine(new string('-', 80));
         Console.WriteLine();
 
         // Step 7: Interactive conversation loop
@@ -241,8 +241,8 @@ internal static class Demo09_GraphDatabaseCrimeAgent
             {
                 Console.WriteLine();
                 Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("👋 Farewell! Thank you for this most interesting investigation.");
-                Console.WriteLine("   Remember: logic and observation never fail! 🧠✨");
+                Console.WriteLine("?? Farewell! Thank you for this most interesting investigation.");
+                Console.WriteLine("   Remember: logic and observation never fail! ???");
                 Console.ResetColor();
                 break;
             }
@@ -250,19 +250,19 @@ internal static class Demo09_GraphDatabaseCrimeAgent
             // Get response from detective
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.Write("Holmsworth Marot 🕵️: ");
+            Console.Write("Holmsworth Marot ???: ");
             Console.ResetColor();
 
             try
             {
-                var response = await detective.RunAsync(userInput, thread);
+                var response = await detective.RunAsync(userInput, session);
                 Console.WriteLine(response.Text);
             }
             catch (Exception ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"❌ My apologies! An unexpected obstacle: {ex.Message}");
-                Console.WriteLine($"💡 Perhaps we should approach this investigation from a different angle?");
+                Console.WriteLine($"? My apologies! An unexpected obstacle: {ex.Message}");
+                Console.WriteLine($"?? Perhaps we should approach this investigation from a different angle?");
                 Console.WriteLine($"   Try being more specific about the crime, suspect, or relationship you seek.");
                 Console.ResetColor();
             }
@@ -271,13 +271,13 @@ internal static class Demo09_GraphDatabaseCrimeAgent
         }
 
         Console.WriteLine();
-        Console.WriteLine("✅ Demo Complete: The investigation has concluded.");
+        Console.WriteLine("? Demo Complete: The investigation has concluded.");
         Console.WriteLine();
-        Console.WriteLine("💡 Key Takeaways:");
-        Console.WriteLine("   • MCP enables dynamic integration with Neo4j graph databases");
-        Console.WriteLine("   • Graph databases excel at uncovering complex relationships");
-        Console.WriteLine("   • Environment variables keep sensitive credentials secure");
-        Console.WriteLine("   • AI agents can be given rich personalities that enhance user experience");
-        Console.WriteLine("   • The combination of graph queries and AI reasoning creates powerful investigations!");
+        Console.WriteLine("?? Key Takeaways:");
+        Console.WriteLine("   � MCP enables dynamic integration with Neo4j graph databases");
+        Console.WriteLine("   � Graph databases excel at uncovering complex relationships");
+        Console.WriteLine("   � Environment variables keep sensitive credentials secure");
+        Console.WriteLine("   � AI agents can be given rich personalities that enhance user experience");
+        Console.WriteLine("   � The combination of graph queries and AI reasoning creates powerful investigations!");
     }
 }

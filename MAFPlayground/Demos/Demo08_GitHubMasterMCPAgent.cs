@@ -1,4 +1,4 @@
-﻿// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
+// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
 // Copyright (c) 2025 Jose Luis Latorre
 
 using Azure.AI.OpenAI;
@@ -29,21 +29,21 @@ internal static class Demo08_GitHubMasterMCPAgent
         Console.WriteLine("\n=== DEMO 08: GITHUB MASTER - MCP POWERED AGENT ===\n");
 
         // Step 1: Create an MCP client connected to the GitHub server
-        Console.WriteLine("🔌 Connecting to GitHub MCP Server...");
-        await using var mcpClient = await McpClientFactory.CreateAsync(new StdioClientTransport(new()
+        Console.WriteLine("?? Connecting to GitHub MCP Server...");
+        await using var mcpClient = await McpClient.CreateAsync(new StdioClientTransport(new()
         {
             Name = "GitHubMCPServer",
             Command = "npx",
             Arguments = ["-y", "--verbose", "@modelcontextprotocol/server-github"],
         }));
 
-        Console.WriteLine("✅ Connected to GitHub MCP Server!\n");
+        Console.WriteLine("? Connected to GitHub MCP Server!\n");
 
         // Step 2: Retrieve the list of tools available from the MCP server
-        Console.WriteLine("🔍 Discovering available GitHub tools...");
+        Console.WriteLine("?? Discovering available GitHub tools...");
         var mcpTools = await mcpClient.ListToolsAsync().ConfigureAwait(false);
 
-        Console.WriteLine($"✅ Found {mcpTools.Count} GitHub tools!\n");
+        Console.WriteLine($"? Found {mcpTools.Count} GitHub tools!\n");
 
         // Step 3: Create the Azure OpenAI chat client using the config
         var azureClient = new AzureOpenAIClient(AIConfig.Endpoint, AIConfig.KeyCredential);
@@ -57,8 +57,10 @@ internal static class Demo08_GitHubMasterMCPAgent
             new ChatClientAgentOptions
             {
                 Name = "GitHubMaster",
-                Instructions = """
-                    You are The GitHub Master 🎩 - a witty, knowledgeable, and slightly eccentric 
+                ChatOptions = new ChatOptions
+                {
+                    Instructions = """
+                    You are The GitHub Master ?? - a witty, knowledgeable, and slightly eccentric 
                     GitHub expert who speaks with flair and enthusiasm!
                     
                     You can:
@@ -84,30 +86,28 @@ internal static class Demo08_GitHubMasterMCPAgent
                     Keep it fun, informative, and helpful. You're not just retrieving data - 
                     you're telling stories about code and collaboration!
                     """,
-                ChatOptions = new ChatOptions
-                {
                     // Cast MCP tools to AITool and add them to the agent
                     Tools = [.. mcpTools.Cast<AITool>()]
                 }
             });
 
-        // Step 5: Create a new thread for conversation
-        AgentThread thread = gitHubMaster.GetNewThread();
+        // Step 5: Create a new session for conversation
+        var session = await gitHubMaster.CreateSessionAsync();
 
         // Welcome message
-        Console.WriteLine("🎩 The GitHub Master is here to serve!\n");
-        Console.WriteLine("💡 I can help you with:");
-        Console.WriteLine("   • Exploring repositories and their history");
-        Console.WriteLine("   • Analyzing recent commits and changes");
-        Console.WriteLine("   • Investigating issues and pull requests");
-        Console.WriteLine("   • Discovering repository statistics and contributors");
-        Console.WriteLine("   • Searching for interesting projects");
+        Console.WriteLine("?? The GitHub Master is here to serve!\n");
+        Console.WriteLine("?? I can help you with:");
+        Console.WriteLine("   � Exploring repositories and their history");
+        Console.WriteLine("   � Analyzing recent commits and changes");
+        Console.WriteLine("   � Investigating issues and pull requests");
+        Console.WriteLine("   � Discovering repository statistics and contributors");
+        Console.WriteLine("   � Searching for interesting projects");
         Console.WriteLine();
-        Console.WriteLine("📝 Examples:");
-        Console.WriteLine("   • 'Summarize the last 5 commits to microsoft/semantic-kernel'");
-        Console.WriteLine("   • 'What are the open issues in microsoft/agent-framework?'");
-        Console.WriteLine("   • 'Show me the contributors to dotnet/runtime'");
-        Console.WriteLine("   • 'Find popular machine learning repositories'");
+        Console.WriteLine("?? Examples:");
+        Console.WriteLine("   � 'Summarize the last 5 commits to microsoft/semantic-kernel'");
+        Console.WriteLine("   � 'What are the open issues in microsoft/agent-framework?'");
+        Console.WriteLine("   � 'Show me the contributors to dotnet/runtime'");
+        Console.WriteLine("   � 'Find popular machine learning repositories'");
         Console.WriteLine();
         Console.WriteLine("Type 'q' or 'quit' to exit the conversation.\n");
         Console.WriteLine(new string('=', 80));
@@ -133,7 +133,7 @@ internal static class Demo08_GitHubMasterMCPAgent
             {
                 Console.WriteLine();
                 Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("👋 The GitHub Master bids you farewell! May your commits be meaningful and your PRs swift! ✨");
+                Console.WriteLine("?? The GitHub Master bids you farewell! May your commits be meaningful and your PRs swift! ?");
                 Console.ResetColor();
                 break;
             }
@@ -141,19 +141,19 @@ internal static class Demo08_GitHubMasterMCPAgent
             // Get response from the GitHub Master
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.Magenta;
-            Console.Write("GitHub Master 🎩: ");
+            Console.Write("GitHub Master ??: ");
             Console.ResetColor();
 
             try
             {
-                var response = await gitHubMaster.RunAsync(userInput, thread);
+                var response = await gitHubMaster.RunAsync(userInput, session);
                 Console.WriteLine(response.Text);
             }
             catch (Exception ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"❌ Oops! Even the GitHub Master encounters mysteries: {ex.Message}");
-                Console.WriteLine($"💡 Try rephrasing your question or being more specific about the repository.");
+                Console.WriteLine($"? Oops! Even the GitHub Master encounters mysteries: {ex.Message}");
+                Console.WriteLine($"?? Try rephrasing your question or being more specific about the repository.");
                 Console.ResetColor();
             }
 
@@ -161,8 +161,8 @@ internal static class Demo08_GitHubMasterMCPAgent
         }
 
         Console.WriteLine();
-        Console.WriteLine("✅ Demo Complete: The GitHub Master has completed this session.");
-        Console.WriteLine("💡 Key Takeaway: MCP allows agents to discover and use external tools dynamically,");
+        Console.WriteLine("? Demo Complete: The GitHub Master has completed this session.");
+        Console.WriteLine("?? Key Takeaway: MCP allows agents to discover and use external tools dynamically,");
         Console.WriteLine("   without hardcoding every possible function. The agent automatically learned");
         Console.WriteLine("   what GitHub operations are available and how to use them!");
     }

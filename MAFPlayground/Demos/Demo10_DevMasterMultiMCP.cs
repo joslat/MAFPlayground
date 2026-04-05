@@ -45,7 +45,7 @@ internal static class Demo10_DevMasterMultiMCP
         // Step 1: Connect to GitHub MCP Server
         // ====================================
         Console.WriteLine("?? Connecting to GitHub MCP Server...");
-        await using var githubMcpClient = await McpClientFactory.CreateAsync(new StdioClientTransport(new()
+        await using var githubMcpClient = await McpClient.CreateAsync(new StdioClientTransport(new()
         {
             Name = "GitHubMCPServer",
             Command = "npx",
@@ -62,7 +62,7 @@ internal static class Demo10_DevMasterMultiMCP
         // Step 2: Connect to Microsoft Learn MCP Server
         // ====================================
         Console.WriteLine("?? Connecting to Microsoft Learn MCP Server...");
-        await using var learnMcpClient = await McpClientFactory.CreateAsync(new HttpClientTransport(new()
+        await using var learnMcpClient = await McpClient.CreateAsync(new HttpClientTransport(new()
         {
             Name = "MicrosoftLearnMCPServer",
             Endpoint = new Uri("https://learn.microsoft.com/api/mcp")
@@ -84,8 +84,8 @@ internal static class Demo10_DevMasterMultiMCP
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine($"???  Total tools available: {allTools.Count}");
         Console.ResetColor();
-        Console.WriteLine($"   • GitHub tools: {githubTools.Count}");
-        Console.WriteLine($"   • Microsoft Learn tools: {learnTools.Count}\n");
+        Console.WriteLine($"   ï¿½ GitHub tools: {githubTools.Count}");
+        Console.WriteLine($"   ï¿½ Microsoft Learn tools: {learnTools.Count}\n");
 
         // ====================================
         // Step 4: Create the Azure OpenAI chat client
@@ -103,7 +103,9 @@ internal static class Demo10_DevMasterMultiMCP
             new ChatClientAgentOptions
             {
                 Name = "DevMaster",
-                Instructions = """
+                ChatOptions = new ChatOptions
+                {
+                    Instructions = """
                     You are The Dev Master ???? - a brilliant development mentor who combines 
                     practical code examples from GitHub with official Microsoft documentation 
                     to provide comprehensive, actionable guidance.
@@ -174,16 +176,14 @@ internal static class Demo10_DevMasterMultiMCP
                     Remember: You're not just retrieving information - you're being a mentor,
                     connecting dots between official guidance and real-world practice!
                     """,
-                ChatOptions = new ChatOptions
-                {
                     Tools = allTools
                 }
             });
 
         // ====================================
-        // Step 6: Create a new thread
+        // Step 6: Create a new session
         // ====================================
-        AgentThread thread = devMaster.GetNewThread();
+        var session = await devMaster.CreateSessionAsync();
 
         // ====================================
         // Welcome message
@@ -203,31 +203,31 @@ internal static class Demo10_DevMasterMultiMCP
         Console.WriteLine("?? What I can help you with:");
         Console.WriteLine();
         Console.WriteLine("   ?? Learning Topics:");
-        Console.WriteLine("      • 'How do I implement dependency injection in .NET?'");
-        Console.WriteLine("      • 'What's the best way to handle async/await in C#?'");
-        Console.WriteLine("      • 'Explain Azure Functions triggers and bindings'");
+        Console.WriteLine("      ï¿½ 'How do I implement dependency injection in .NET?'");
+        Console.WriteLine("      ï¿½ 'What's the best way to handle async/await in C#?'");
+        Console.WriteLine("      ï¿½ 'Explain Azure Functions triggers and bindings'");
         Console.WriteLine();
         Console.WriteLine("   ?? Code Examples:");
-        Console.WriteLine("      • 'Show me how Microsoft implements authentication in their repos'");
-        Console.WriteLine("      • 'Find examples of using Semantic Kernel'");
-        Console.WriteLine("      • 'How does the Agent Framework handle workflows?'");
+        Console.WriteLine("      ï¿½ 'Show me how Microsoft implements authentication in their repos'");
+        Console.WriteLine("      ï¿½ 'Find examples of using Semantic Kernel'");
+        Console.WriteLine("      ï¿½ 'How does the Agent Framework handle workflows?'");
         Console.WriteLine();
         Console.WriteLine("   ?? Combined Queries:");
-        Console.WriteLine("      • 'Teach me about MCP and show real implementations'");
-        Console.WriteLine("      • 'What's the official guidance on OpenTelemetry + practical examples?'");
-        Console.WriteLine("      • 'Best practices for AI agents + code from microsoft/agent-framework'");
+        Console.WriteLine("      ï¿½ 'Teach me about MCP and show real implementations'");
+        Console.WriteLine("      ï¿½ 'What's the official guidance on OpenTelemetry + practical examples?'");
+        Console.WriteLine("      ï¿½ 'Best practices for AI agents + code from microsoft/agent-framework'");
         Console.WriteLine();
         Console.WriteLine("   ?? Research & Discovery:");
-        Console.WriteLine("      • 'What's new in .NET 9 according to Learn?'");
-        Console.WriteLine("      • 'Find popular Azure AI repositories'");
-        Console.WriteLine("      • 'Compare official guidance with community implementations'");
+        Console.WriteLine("      ï¿½ 'What's new in .NET 9 according to Learn?'");
+        Console.WriteLine("      ï¿½ 'Find popular Azure AI repositories'");
+        Console.WriteLine("      ï¿½ 'Compare official guidance with community implementations'");
         Console.WriteLine();
         
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine("?? Tip: I work best when you're specific! Tell me if you want:");
-        Console.WriteLine("   • Official documentation and best practices");
-        Console.WriteLine("   • Real code examples from GitHub");
-        Console.WriteLine("   • Both! (recommended for learning)");
+        Console.WriteLine("   ï¿½ Official documentation and best practices");
+        Console.WriteLine("   ï¿½ Real code examples from GitHub");
+        Console.WriteLine("   ï¿½ Both! (recommended for learning)");
         Console.ResetColor();
         Console.WriteLine();
         
@@ -271,7 +271,7 @@ internal static class Demo10_DevMasterMultiMCP
 
             try
             {
-                var response = await devMaster.RunAsync(userInput, thread);
+                var response = await devMaster.RunAsync(userInput, session);
                 Console.WriteLine(response.Text);
             }
             catch (Exception ex)
@@ -281,9 +281,9 @@ internal static class Demo10_DevMasterMultiMCP
                 Console.WriteLine();
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine("?? Troubleshooting tips:");
-                Console.WriteLine("   • Try rephrasing your question");
-                Console.WriteLine("   • Be more specific about what you're looking for");
-                Console.WriteLine("   • Check if the repository name or topic is correct");
+                Console.WriteLine("   ï¿½ Try rephrasing your question");
+                Console.WriteLine("   ï¿½ Be more specific about what you're looking for");
+                Console.WriteLine("   ï¿½ Check if the repository name or topic is correct");
                 Console.ResetColor();
             }
 

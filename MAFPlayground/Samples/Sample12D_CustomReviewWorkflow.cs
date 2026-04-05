@@ -1,11 +1,10 @@
-﻿// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
+// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
 // Copyright (c) 2025 Jose Luis Latorre
 
 using Azure.AI.OpenAI;
 using MAFPlayground.Utils;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Workflows;
-using Microsoft.Agents.AI.Workflows.Reflection;
 using Microsoft.Extensions.AI;
 using System;
 using System.Collections.Generic;
@@ -22,7 +21,7 @@ namespace MAFPlayground.Samples;
 /// Architecture:
 /// 1. Build a review workflow with specialized review agents (fan-out/fan-in)
 /// 2. Execute the review workflow independently (non-streaming)
-/// 3. Use sequential cycles: Writer → Review → Writer → Review
+/// 3. Use sequential cycles: Writer ? Review ? Writer ? Review
 /// 4. Collect complete outputs from each phase
 /// 
 /// This demonstrates:
@@ -68,7 +67,7 @@ When you receive feedback from reviewers, carefully incorporate their suggestion
 Build upon the previous version while addressing all critiques."
         );
 
-        Console.WriteLine("✅ Writer agent created.\n");
+        Console.WriteLine("? Writer agent created.\n");
 
         // ====================================
         // Step 3: Execute sequential review cycles
@@ -154,14 +153,14 @@ Include facts that can be verified and maintain a professional writing style.")
             }
             else
             {
-                Console.WriteLine("⚠️ Warning: No editor output captured from review workflow.");
+                Console.WriteLine("?? Warning: No editor output captured from review workflow.");
             }
 
             Console.WriteLine(new string('=', 80));
         }
 
         Console.WriteLine();
-        Console.WriteLine("✅ Sample 12D Complete!");
+        Console.WriteLine("? Sample 12D Complete!");
         Console.WriteLine();
         Console.WriteLine("Key Takeaways:");
         Console.WriteLine("- Non-streaming execution avoids fragmentation issues");
@@ -192,7 +191,7 @@ Include facts that can be verified and maintain a professional writing style.")
         // Build the workflow: fan-out to reviewers, aggregate, then editor synthesizes
         return new WorkflowBuilder(startExecutor)
             .AddFanOutEdge(startExecutor, targets: [seoReviewer, piiReviewer, factChecker, styleReviewer])
-            .AddFanInEdge(aggregationExecutor, sources: [seoReviewer, piiReviewer, factChecker, styleReviewer])
+            .AddFanInBarrierEdge([seoReviewer, piiReviewer, factChecker, styleReviewer], aggregationExecutor)
             .AddEdge(aggregationExecutor, editorAgent)
             .WithOutputFrom(editorAgent)
             .Build();
@@ -316,10 +315,10 @@ Format your response as:
 /// <summary>
 /// Executor that starts the review workflow by broadcasting content to all reviewers.
 /// </summary>
-internal sealed class Sample12DReviewStartExecutor : ReflectingExecutor<Sample12DReviewStartExecutor>, IMessageHandler<List<ChatMessage>>
+internal sealed partial class Sample12DReviewStartExecutor : Executor
 {
     public Sample12DReviewStartExecutor() : base("Sample12DReviewStartExecutor") { }
-
+    [MessageHandler]
     public async ValueTask HandleAsync(List<ChatMessage> message, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         Console.WriteLine("[ReviewStart] Distributing content to all reviewers...");
@@ -335,12 +334,12 @@ internal sealed class Sample12DReviewStartExecutor : ReflectingExecutor<Sample12
 /// <summary>
 /// Executor that aggregates feedback from all reviewers before passing to editor.
 /// </summary>
-internal sealed class Sample12DReviewAggregationExecutor : ReflectingExecutor<Sample12DReviewAggregationExecutor>, IMessageHandler<ChatMessage, List<ChatMessage>>
+internal sealed partial class Sample12DReviewAggregationExecutor : Executor
 {
     public Sample12DReviewAggregationExecutor() : base("Sample12DReviewAggregationExecutor") { }
 
     private readonly List<ChatMessage> _reviews = new List<ChatMessage>();
-
+    [MessageHandler]
     public ValueTask<List<ChatMessage>> HandleAsync(ChatMessage message, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         Console.WriteLine($"[ReviewAggregation] Received review from {message.AuthorName}");

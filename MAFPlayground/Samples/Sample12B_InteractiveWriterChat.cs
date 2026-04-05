@@ -1,4 +1,4 @@
-﻿// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
+// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
 // Copyright (c) 2025 Jose Luis Latorre
 
 using Azure.AI.OpenAI;
@@ -57,7 +57,7 @@ When you receive feedback from the editor, carefully incorporate their suggestio
 Build upon the previous version of the story while addressing the editor's critiques."
         );
 
-        Console.WriteLine("✅ Writer agent created.\n");
+        Console.WriteLine("? Writer agent created.\n");
 
         // ====================================
         // Step 2: Initial story generation
@@ -84,7 +84,7 @@ Build upon the previous version of the story while addressing the editor's criti
             new(ChatRole.User, userPrompt)
         };
 
-        AgentRunResponse response = await writer.RunAsync(conversationHistory);
+        AgentResponse response = await writer.RunAsync(conversationHistory);
         
         Console.WriteLine($"[Writer]:");
         Console.WriteLine(response.Text);
@@ -118,13 +118,13 @@ Build upon the previous version of the story while addressing the editor's criti
                 {
                     Console.WriteLine();
                     Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("✅ Story approved! Great work!");
+                    Console.WriteLine("? Story approved! Great work!");
                     Console.ResetColor();
                 }
                 else
                 {
                     Console.WriteLine();
-                    Console.WriteLine("👋 Exiting interactive session.");
+                    Console.WriteLine("?? Exiting interactive session.");
                 }
                 break;
             }
@@ -137,7 +137,7 @@ Build upon the previous version of the story while addressing the editor's criti
             Console.WriteLine();
 
             // Get writer's revised version
-            AgentRunResponse revisedResponse = await writer.RunAsync(conversationHistory);
+            AgentResponse revisedResponse = await writer.RunAsync(conversationHistory);
             
             Console.WriteLine($"[Writer - Revision {iteration}]:");
             Console.WriteLine(revisedResponse.Text);
@@ -160,7 +160,7 @@ Build upon the previous version of the story while addressing the editor's criti
         Console.WriteLine($"Total messages in conversation: {conversationHistory.Count}");
         Console.WriteLine();
 
-        Console.WriteLine("✅ Sample 12B Complete!");
+        Console.WriteLine("? Sample 12B Complete!");
         Console.WriteLine();
         Console.WriteLine("Key Takeaways:");
         Console.WriteLine("- Writer agent maintains context across multiple turns");

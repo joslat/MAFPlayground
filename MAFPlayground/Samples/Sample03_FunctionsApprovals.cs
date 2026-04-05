@@ -12,6 +12,8 @@ using Azure.AI.OpenAI;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using OpenAI;
+using OpenAI.Chat;
+using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
 
 namespace MAFPlayground.Samples;
 
@@ -20,7 +22,7 @@ internal static class Sample03_FunctionsApprovals
     // Simple function tool that fakes getting the weather for a given location.
     [Description("Get the weather for a given location.")]
     private static string GetWeather([Description("The location to get the weather for.")] string location)
-        => $"The weather in {location} is cloudy with a high of 15°C.";
+        => $"The weather in {location} is cloudy with a high of 15ï¿½C.";
 
     public static async Task Execute()
     {
@@ -36,16 +38,16 @@ internal static class Sample03_FunctionsApprovals
         // Create the agent and pass the approval-requiring tool to it
         AIAgent agent = azureClient
             .GetChatClient(AIConfig.ModelDeployment)
-            .CreateAIAgent(
+            .AsAIAgent(
                 instructions: "You are a helpful assistant that may request human approval before running tools.",
                 tools: new[] { approvalRequiredWeatherFunction });
 
-        // Start a new thread for the agent run
-        AgentThread thread = agent.GetNewThread();
+        // Start a new session for the agent run
+        var session = await agent.CreateSessionAsync();
 
         // Initial prompt that will likely trigger a function call requiring approval
         string prompt = "What is the weather like in Amsterdam?";
-        AgentRunResponse response = await agent.RunAsync(prompt, thread);
+        AgentResponse response = await agent.RunAsync(prompt, session);
 
         // Loop until no more function approval requests are present
         while (true)
@@ -53,7 +55,7 @@ internal static class Sample03_FunctionsApprovals
 #pragma warning disable MEAI001 // Type is for evaluation purposes only and is subject to change or removal in future updates.
             var functionApprovalRequests = response.Messages
                 .SelectMany(x => x.Contents)
-                .OfType<FunctionApprovalRequestContent>()
+                .OfType<ToolApprovalRequestContent>()
                 .ToList();
 
             if (functionApprovalRequests.Count == 0)
@@ -71,23 +73,24 @@ internal static class Sample03_FunctionsApprovals
             }
 
             // For simplicity assume one approval request; show details and ask operator
-            FunctionApprovalRequestContent requestContent = functionApprovalRequests.First();
-            Console.WriteLine($"Agent requests approval to execute function '{requestContent.FunctionCall.Name}'");
+            ToolApprovalRequestContent requestContent = functionApprovalRequests.First();
+            var functionCall = (FunctionCallContent)requestContent.ToolCall!;
+            Console.WriteLine($"Agent requests approval to execute function '{functionCall.Name}'");
 
             // Print arguments iteratively if possible
-            PrintArguments(requestContent.FunctionCall.Arguments);
+            PrintArguments(functionCall.Arguments);
 
             Console.Write("Approve this function call? (y/N): ");
             var key = Console.ReadKey(intercept: true);
             Console.WriteLine();
             bool approved = char.ToLowerInvariant(key.KeyChar) == 'y';
 
-            // Create a FunctionApprovalResponseContent and pass it back as a new user message on the same thread
-            FunctionApprovalResponseContent approvalResponse = requestContent.CreateResponse(approved);
+            // Create a ToolApprovalResponseContent and pass it back as a new user message on the same session
+            ToolApprovalResponseContent approvalResponse = requestContent.CreateResponse(approved);
             ChatMessage approvalMessage = new ChatMessage(ChatRole.User, new[] { approvalResponse });
 
-            // Run the agent again with the approval/rejection on the same thread
-            response = await agent.RunAsync(approvalMessage, thread);
+            // Run the agent again with the approval/rejection on the same session
+            response = await agent.RunAsync(approvalMessage, session);
 
             if (!approved)
             {

@@ -2,7 +2,6 @@
 // Copyright (c) 2025 Jose Luis
 
 using Microsoft.Agents.AI.Workflows;
-using Microsoft.Agents.AI.Workflows.Reflection;
 
 namespace MAFPlayground.Tests;
 
@@ -25,7 +24,7 @@ namespace MAFPlayground.Tests;
 /// - Test01: Function-based executors ? WORKS
 /// - Test02: Class-based executors ? Testing now...
 /// </summary>
-internal static class Test02_FanOutFanInClassBased
+internal static partial class Test02_FanOutFanInClassBased
 {
     // --------------------- Entry Point ---------------------
     public static async Task Execute()
@@ -47,7 +46,7 @@ internal static class Test02_FanOutFanInClassBased
         Console.WriteLine("EXECUTING TEST WORKFLOW (CLASS-BASED)");
         Console.WriteLine(new string('=', 80) + "\n");
 
-        await using StreamingRun run = await InProcessExecution.StreamAsync(workflow, "START");
+        await using StreamingRun run = await InProcessExecution.RunStreamingAsync(workflow, "START");
 
         await foreach (WorkflowEvent evt in run.WatchStreamAsync())
         {
@@ -86,7 +85,7 @@ internal static class Test02_FanOutFanInClassBased
         // Build workflow
         return new WorkflowBuilder(startExecutor)
             .AddFanOutEdge(startExecutor, targets: [executorA, executorB])
-            .AddFanInEdge(aggregator, sources: [executorA, executorB])
+            .AddFanInBarrierEdge([executorA, executorB], aggregator)
             .AddEdge(aggregator, finalExecutor)
             .WithOutputFrom(finalExecutor)
             .Build();
@@ -97,12 +96,11 @@ internal static class Test02_FanOutFanInClassBased
     /// <summary>
     /// Start executor - broadcasts message to fan-out targets
     /// </summary>
-    private sealed class StartExecutor_ClassBased : 
-        ReflectingExecutor<StartExecutor_ClassBased>, 
-        IMessageHandler<string>
+    private sealed partial class StartExecutor_ClassBased : 
+        Executor
     {
         public StartExecutor_ClassBased() : base("StartExecutor") { }
-
+        [MessageHandler]
         public async ValueTask HandleAsync(
             string message, 
             IWorkflowContext context, 
@@ -118,12 +116,11 @@ internal static class Test02_FanOutFanInClassBased
     /// Executor A - processes message and returns result
     /// ? Using synchronous ValueTask.FromResult pattern
     /// </summary>
-    private sealed class ExecutorA_ClassBased : 
-        ReflectingExecutor<ExecutorA_ClassBased>, 
-        IMessageHandler<string, string>
+    private sealed partial class ExecutorA_ClassBased : 
+        Executor
     {
         public ExecutorA_ClassBased() : base("ExecutorA") { }
-
+        [MessageHandler]
         public ValueTask<string> HandleAsync(
             string message, 
             IWorkflowContext context, 
@@ -143,12 +140,11 @@ internal static class Test02_FanOutFanInClassBased
     /// Executor B - processes message and returns result
     /// ? Using synchronous ValueTask.FromResult pattern
     /// </summary>
-    private sealed class ExecutorB_ClassBased : 
-        ReflectingExecutor<ExecutorB_ClassBased>, 
-        IMessageHandler<string, string>
+    private sealed partial class ExecutorB_ClassBased : 
+        Executor
     {
         public ExecutorB_ClassBased() : base("ExecutorB") { }
-
+        [MessageHandler]
         public ValueTask<string> HandleAsync(
             string message, 
             IWorkflowContext context, 
@@ -167,15 +163,14 @@ internal static class Test02_FanOutFanInClassBased
     /// <summary>
     /// Aggregator - collects results from ExecutorA and ExecutorB
     /// </summary>
-    private sealed class AggregatorExecutor_ClassBased : 
-        ReflectingExecutor<AggregatorExecutor_ClassBased>, 
-        IMessageHandler<string, string>
+    private sealed partial class AggregatorExecutor_ClassBased : 
+        Executor
     {
         private readonly List<string> _messages = new();
         private const int ExpectedCount = 2;
 
         public AggregatorExecutor_ClassBased() : base("AggregatorExecutor") { }
-
+        [MessageHandler]
         public ValueTask<string> HandleAsync(
             string message, 
             IWorkflowContext context, 
@@ -202,12 +197,11 @@ internal static class Test02_FanOutFanInClassBased
     /// <summary>
     /// Final executor - displays aggregated results
     /// </summary>
-    private sealed class FinalExecutor_ClassBased : 
-        ReflectingExecutor<FinalExecutor_ClassBased>, 
-        IMessageHandler<string, string>
+    private sealed partial class FinalExecutor_ClassBased : 
+        Executor
     {
         public FinalExecutor_ClassBased() : base("FinalExecutor") { }
-
+        [MessageHandler]
         public ValueTask<string> HandleAsync(
             string message, 
             IWorkflowContext context, 

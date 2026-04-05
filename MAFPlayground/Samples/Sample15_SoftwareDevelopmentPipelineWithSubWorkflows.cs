@@ -1,4 +1,4 @@
-﻿// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
+// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
 // Copyright (c) 2025 Jose Luis Latorre
 
 using MAFPlayground.Utils;
@@ -27,26 +27,26 @@ namespace MAFPlayground.Samples;
 /// 5. Reusability - Sub-workflows can be used in other pipelines
 /// 
 /// Pipeline Flow with Sub-Workflows:
-/// ┌─────────────────────┐
-/// │ Analysis Sub-WF     │ → Requirements → Risk → Feasibility
-/// └──────────┬──────────┘
-///            ↓
-/// ┌─────────────────────┐
-/// │ Specification Sub-WF│ → Tech Specs → API Design → Data Model
-/// └──────────┬──────────┘
-///            ↓
-/// ┌─────────────────────────────────┐
-/// │ Expert Assessment (Parallel)    │
-/// │ Security │ Performance │ UX     │ → Aggregator
-/// └──────────┬──────────────────────┘
-///            ↓
-/// ┌─────────────────────┐
-/// │ Implementation Sub-WF│ → Code → Unit Tests → Integration
-/// └──────────┬──────────┘
-///            ↓
-/// ┌─────────────┐
-/// │Quality Control│ → APPROVED → [Deploy]
-/// └─────────────┘ → REJECTED → [Back to Implementation Sub-WF]
+/// +---------------------+
+/// � Analysis Sub-WF     � ? Requirements ? Risk ? Feasibility
+/// +---------------------+
+///            ?
+/// +---------------------+
+/// � Specification Sub-WF� ? Tech Specs ? API Design ? Data Model
+/// +---------------------+
+///            ?
+/// +---------------------------------+
+/// � Expert Assessment (Parallel)    �
+/// � Security � Performance � UX     � ? Aggregator
+/// +---------------------------------+
+///            ?
+/// +---------------------+
+/// � Implementation Sub-WF� ? Code ? Unit Tests ? Integration
+/// +---------------------+
+///            ?
+/// +-------------+
+/// �Quality Control� ? APPROVED ? [Deploy]
+/// +-------------+ ? REJECTED ? [Back to Implementation Sub-WF]
 /// </summary>
 /// <remarks>
 /// This sample demonstrates workflow composition and hierarchical design patterns.
@@ -101,7 +101,7 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
         var projectInput = "Project: User Authentication System";
         Console.WriteLine($"Starting project: {projectInput}\n");
 
-        await using StreamingRun run = await InProcessExecution.StreamAsync(mainWorkflow, projectInput);
+        await using StreamingRun run = await InProcessExecution.RunStreamingAsync(mainWorkflow, projectInput);
         await foreach (WorkflowEvent evt in run.WatchStreamAsync().ConfigureAwait(false))
         {
             if (evt is WorkflowOutputEvent output)
@@ -117,16 +117,16 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
             }
         }
 
-        Console.WriteLine("\n✅ Sample 15 Complete!\n");
+        Console.WriteLine("\n? Sample 15 Complete!\n");
         Console.WriteLine("Key Concepts Demonstrated:");
-        Console.WriteLine("  ✓ Hierarchical workflow composition with sub-workflows");
-        Console.WriteLine("  ✓ Modular phase organization (Analysis, Specification, Implementation, QC, Deployment)");
-        Console.WriteLine("  ✓ Sub-workflow reusability and independent visualization");
-        Console.WriteLine("  ✓ Concurrent processing within sub-workflows (Expert reviews)");
-        Console.WriteLine("  ✓ Conditional routing based on QCResult at main workflow level");
-        Console.WriteLine("  ✓ Loop-back to sub-workflows on rejection");
-        Console.WriteLine("  ✓ Clean separation of concerns between phases");
-        Console.WriteLine("  ✓ Function-based sub-workflow builders for readability\n");
+        Console.WriteLine("  ? Hierarchical workflow composition with sub-workflows");
+        Console.WriteLine("  ? Modular phase organization (Analysis, Specification, Implementation, QC, Deployment)");
+        Console.WriteLine("  ? Sub-workflow reusability and independent visualization");
+        Console.WriteLine("  ? Concurrent processing within sub-workflows (Expert reviews)");
+        Console.WriteLine("  ? Conditional routing based on QCResult at main workflow level");
+        Console.WriteLine("  ? Loop-back to sub-workflows on rejection");
+        Console.WriteLine("  ? Clean separation of concerns between phases");
+        Console.WriteLine("  ? Function-based sub-workflow builders for readability\n");
         Console.WriteLine("Compare with Sample 14 to see the benefits of sub-workflow organization!\n");
     }
 
@@ -135,7 +135,7 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
     // ====================================
 
     /// <summary>
-    /// Builds the Analysis Phase sub-workflow: Requirements → Risk → Feasibility
+    /// Builds the Analysis Phase sub-workflow: Requirements ? Risk ? Feasibility
     /// </summary>
     private static ExecutorBinding BuildAnalysisSubWorkflow()
     {
@@ -144,8 +144,8 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> gatherRequirementsFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
             {
-                var result = $"{input}\n[✓ Requirements Gathered: Feature scope defined]";
-                Console.WriteLine("  → Requirements gathering complete");
+                var result = $"{input}\n[? Requirements Gathered: Feature scope defined]";
+                Console.WriteLine("  ? Requirements gathering complete");
                 return ValueTask.FromResult(result);
             };
         var gatherRequirements = gatherRequirementsFunc.BindAsExecutor("GatherRequirements");
@@ -153,8 +153,8 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> riskAnalysisFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
             {
-                var result = $"{input}\n[✓ Risk Analysis: Low risk, no blockers identified]";
-                Console.WriteLine("  → Risk analysis complete");
+                var result = $"{input}\n[? Risk Analysis: Low risk, no blockers identified]";
+                Console.WriteLine("  ? Risk analysis complete");
                 return ValueTask.FromResult(result);
             };
         var riskAnalysis = riskAnalysisFunc.BindAsExecutor("RiskAnalysis");
@@ -162,8 +162,8 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> feasibilityCheckFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
             {
-                var result = $"{input}\n[✓ Feasibility Check: Project is feasible with current resources]";
-                Console.WriteLine("  → Feasibility check complete");
+                var result = $"{input}\n[? Feasibility Check: Project is feasible with current resources]";
+                Console.WriteLine("  ? Feasibility check complete");
                 return ValueTask.FromResult(result);
             };
         var feasibilityCheck = feasibilityCheckFunc.BindAsExecutor("FeasibilityCheck");
@@ -176,11 +176,11 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
 
         WorkflowVisualizerTool.PrintAll(workflow, "Sub-Workflow 1: Analysis Phase");
 
-        return workflow.ConfigureSubWorkflow("AnalysisPhase");
+        return workflow.BindAsExecutor("AnalysisPhase");
     }
 
     /// <summary>
-    /// Builds the Specification Phase sub-workflow: Tech Specs → API Design → Data Model
+    /// Builds the Specification Phase sub-workflow: Tech Specs ? API Design ? Data Model
     /// </summary>
     private static ExecutorBinding BuildSpecificationSubWorkflow()
     {
@@ -189,8 +189,8 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> technicalSpecsFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
             {
-                var result = $"{input}\n[✓ Technical Specs: Architecture and design patterns documented]";
-                Console.WriteLine("  → Technical specifications complete");
+                var result = $"{input}\n[? Technical Specs: Architecture and design patterns documented]";
+                Console.WriteLine("  ? Technical specifications complete");
                 return ValueTask.FromResult(result);
             };
         var technicalSpecs = technicalSpecsFunc.BindAsExecutor("TechnicalSpecs");
@@ -198,8 +198,8 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> apiDesignFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
             {
-                var result = $"{input}\n[✓ API Design: RESTful endpoints defined with OpenAPI spec]";
-                Console.WriteLine("  → API design complete");
+                var result = $"{input}\n[? API Design: RESTful endpoints defined with OpenAPI spec]";
+                Console.WriteLine("  ? API design complete");
                 return ValueTask.FromResult(result);
             };
         var apiDesign = apiDesignFunc.BindAsExecutor("APIDesign");
@@ -207,8 +207,8 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> dataModelFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
             {
-                var result = $"{input}\n[✓ Data Model: Database schema and relationships defined]";
-                Console.WriteLine("  → Data model complete");
+                var result = $"{input}\n[? Data Model: Database schema and relationships defined]";
+                Console.WriteLine("  ? Data model complete");
                 return ValueTask.FromResult(result);
             };
         var dataModel = dataModelFunc.BindAsExecutor("DataModel");
@@ -221,11 +221,11 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
 
         WorkflowVisualizerTool.PrintAll(workflow, "Sub-Workflow 2: Specification Phase");
 
-        return workflow.ConfigureSubWorkflow("SpecificationPhase");
+        return workflow.BindAsExecutor("SpecificationPhase");
     }
 
     /// <summary>
-    /// Builds the Expert Assessment Phase sub-workflow: Fan-out → Security/Performance/UX → Aggregator
+    /// Builds the Expert Assessment Phase sub-workflow: Fan-out ? Security/Performance/UX ? Aggregator
     /// </summary>
     private static ExecutorBinding BuildExpertAssessmentSubWorkflow()
     {
@@ -236,8 +236,8 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> securityExpertFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
             {
-                var result = "[Security Expert] ✓ PASS - No security vulnerabilities detected. Authentication and authorization properly implemented.";
-                Console.WriteLine("  → Security review complete");
+                var result = "[Security Expert] ? PASS - No security vulnerabilities detected. Authentication and authorization properly implemented.";
+                Console.WriteLine("  ? Security review complete");
                 return ValueTask.FromResult(result);
             };
         var securityExpert = securityExpertFunc.BindAsExecutor("SecurityExpert");
@@ -245,8 +245,8 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> performanceExpertFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
             {
-                var result = "[Performance Expert] ✓ PASS - Efficient algorithms chosen. Expected response time < 200ms.";
-                Console.WriteLine("  → Performance review complete");
+                var result = "[Performance Expert] ? PASS - Efficient algorithms chosen. Expected response time < 200ms.";
+                Console.WriteLine("  ? Performance review complete");
                 return ValueTask.FromResult(result);
             };
         var performanceExpert = performanceExpertFunc.BindAsExecutor("PerformanceExpert");
@@ -254,8 +254,8 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> uxExpertFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
             {
-                var result = "[UX Expert] ✓ PASS - User flows are intuitive. Accessibility standards met.";
-                Console.WriteLine("  → UX review complete");
+                var result = "[UX Expert] ? PASS - User flows are intuitive. Accessibility standards met.";
+                Console.WriteLine("  ? UX review complete");
                 return ValueTask.FromResult(result);
             };
         var uxExpert = uxExpertFunc.BindAsExecutor("UXExpert");
@@ -264,17 +264,17 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
 
         var workflow = new WorkflowBuilder(expertFanOutStart)
             .AddFanOutEdge(expertFanOutStart, targets: new[] { securityExpert, performanceExpert, uxExpert })
-            .AddFanInEdge(expertAggregator, sources: new[] { securityExpert, performanceExpert, uxExpert })
+            .AddFanInBarrierEdge(new[] { securityExpert, performanceExpert, uxExpert }, expertAggregator)
             .WithOutputFrom(expertAggregator)
             .Build();
 
         WorkflowVisualizerTool.PrintAll(workflow, "Sub-Workflow 3: Expert Assessment Phase");
 
-        return workflow.ConfigureSubWorkflow("ExpertAssessmentPhase");
+        return workflow.BindAsExecutor("ExpertAssessmentPhase");
     }
 
     /// <summary>
-    /// Builds the Implementation Phase sub-workflow: Coding → Unit Tests → Integration Tests
+    /// Builds the Implementation Phase sub-workflow: Coding ? Unit Tests ? Integration Tests
     /// </summary>
     private static ExecutorBinding BuildImplementationSubWorkflow()
     {
@@ -283,8 +283,8 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> codingFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
             {
-                var result = $"{input}\n[✓ Coding: Implementation complete with clean code practices]";
-                Console.WriteLine("  → Coding complete");
+                var result = $"{input}\n[? Coding: Implementation complete with clean code practices]";
+                Console.WriteLine("  ? Coding complete");
                 return ValueTask.FromResult(result);
             };
         var coding = codingFunc.BindAsExecutor("Coding");
@@ -292,8 +292,8 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> unitTestsFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
             {
-                var result = $"{input}\n[✓ Unit Tests: 95% code coverage achieved]";
-                Console.WriteLine("  → Unit tests complete");
+                var result = $"{input}\n[? Unit Tests: 95% code coverage achieved]";
+                Console.WriteLine("  ? Unit tests complete");
                 return ValueTask.FromResult(result);
             };
         var unitTests = unitTestsFunc.BindAsExecutor("UnitTests");
@@ -301,8 +301,8 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> integrationTestsFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
             {
-                var result = $"{input}\n[✓ Integration Tests: All endpoints tested successfully]";
-                Console.WriteLine("  → Integration tests complete");
+                var result = $"{input}\n[? Integration Tests: All endpoints tested successfully]";
+                Console.WriteLine("  ? Integration tests complete");
                 return ValueTask.FromResult(result);
             };
         var integrationTests = integrationTestsFunc.BindAsExecutor("IntegrationTests");
@@ -315,7 +315,7 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
 
         WorkflowVisualizerTool.PrintAll(workflow, "Sub-Workflow 4: Implementation Phase");
 
-        return workflow.ConfigureSubWorkflow("ImplementationPhase");
+        return workflow.BindAsExecutor("ImplementationPhase");
     }
 
     /// <summary>
@@ -333,7 +333,7 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
 
         WorkflowVisualizerTool.PrintAll(workflow, "Sub-Workflow 5: Quality Control Phase");
 
-        return workflow.ConfigureSubWorkflow("QualityControlPhase");
+        return workflow.BindAsExecutor("QualityControlPhase");
     }
 
     /// <summary>
@@ -346,8 +346,8 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
         Func<QCResult, IWorkflowContext, CancellationToken, ValueTask<string>> deployFunc = 
             (QCResult input, IWorkflowContext ctx, CancellationToken ct) =>
             {
-                var result = $"{input.Content}\n\n[🚀 DEPLOYED TO PRODUCTION]\n";
-                Console.WriteLine("  → ✅ DEPLOYED TO PRODUCTION!");
+                var result = $"{input.Content}\n\n[?? DEPLOYED TO PRODUCTION]\n";
+                Console.WriteLine("  ? ? DEPLOYED TO PRODUCTION!");
                 return ValueTask.FromResult(result);
             };
         var deployExecutor = deployFunc.BindAsExecutor("DeployToProduction");
@@ -358,7 +358,7 @@ internal static class Sample15_SoftwareDevelopmentPipelineWithSubWorkflows
 
         WorkflowVisualizerTool.PrintAll(workflow, "Sub-Workflow 6: Deployment Phase");
 
-        return workflow.ConfigureSubWorkflow("DeploymentPhase");
+        return workflow.BindAsExecutor("DeploymentPhase");
     }
 }
 

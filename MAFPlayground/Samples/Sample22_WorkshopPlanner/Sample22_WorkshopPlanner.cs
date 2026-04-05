@@ -246,7 +246,7 @@ internal static class Sample22_WorkshopPlanner
 
         try
         {
-            await using StreamingRun run = await InProcessExecution.StreamAsync(workflow, workshopRequest);
+            await using StreamingRun run = await InProcessExecution.RunStreamingAsync(workflow, workshopRequest);
             string? result = null;
             
             await foreach (WorkflowEvent evt in run.WatchStreamAsync().ConfigureAwait(false))

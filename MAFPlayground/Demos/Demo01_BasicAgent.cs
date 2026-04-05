@@ -1,10 +1,11 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
+// Copyright (c) Microsoft. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 using Azure.AI.OpenAI;
 using Azure.Identity;
 using Microsoft.Agents.AI;
 using OpenAI;
+using OpenAI.Chat;
 
 namespace MAFPlayground.Demos;
 
@@ -18,14 +19,14 @@ internal static class Demo01_BasicAgent
         // Create the agent from the chat client
         AIAgent agent = azureClient
             .GetChatClient(AIConfig.ModelDeployment)
-            .CreateAIAgent(instructions: "You are good at telling jokes.");
+            .AsAIAgent(instructions: "You are good at telling jokes.");
 
         // (optional) demonstrate another agent using CLI credentials
         AIAgent agent2 = new AzureOpenAIClient(
           AIConfig.Endpoint,
           new AzureCliCredential())
             .GetChatClient(AIConfig.ModelDeployment)
-            .CreateAIAgent(instructions: "You are good at telling jokes.");
+            .AsAIAgent(instructions: "You are good at telling jokes.");
 
         Console.WriteLine(await agent.RunAsync("Tell me a joke about a pirate."));
         Console.WriteLine(await agent2.RunAsync("Tell me a joke about a pirate but tell it like a pirate parrot."));

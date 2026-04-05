@@ -2,7 +2,6 @@
 // Copyright (c) 2025 Jose Luis
 
 using Microsoft.Agents.AI.Workflows;
-using Microsoft.Agents.AI.Workflows.Reflection;
 
 namespace MAFPlayground.Tests;
 
@@ -27,7 +26,7 @@ namespace MAFPlayground.Tests;
 /// ? Does shared state persist correctly?
 /// ? Does the aggregator receive both messages?
 /// </summary>
-internal static class Test01_FanOutFanInBasic
+internal static partial class Test01_FanOutFanInBasic
 {
     // --------------------- Shared State ---------------------
     private sealed class TestState
@@ -70,7 +69,7 @@ internal static class Test01_FanOutFanInBasic
         Console.WriteLine("EXECUTING TEST WORKFLOW");
         Console.WriteLine(new string('=', 80) + "\n");
 
-        await using StreamingRun run = await InProcessExecution.StreamAsync(workflow, "START");
+        await using StreamingRun run = await InProcessExecution.RunStreamingAsync(workflow, "START");
 
         await foreach (WorkflowEvent evt in run.WatchStreamAsync())
         {
@@ -161,22 +160,21 @@ internal static class Test01_FanOutFanInBasic
         // Build workflow
         return new WorkflowBuilder(startExecutor)
             .AddFanOutEdge(startExecutor, targets: [executorA, executorB])
-            .AddFanInEdge(aggregator, sources: [executorA, executorB])
+            .AddFanInBarrierEdge([executorA, executorB], aggregator)
             .AddEdge(aggregator, finalExecutor)
             .WithOutputFrom(finalExecutor)
             .Build();
     }
 
     // --------------------- Aggregator (Function-Based) ---------------------
-    private sealed class AggregatorExecutor_FunctionBased : 
-        ReflectingExecutor<AggregatorExecutor_FunctionBased>, 
-        IMessageHandler<string, string>
+    private sealed partial class AggregatorExecutor_FunctionBased : 
+        Executor
     {
         private readonly List<string> _messages = new();
         private const int ExpectedCount = 2;
 
         public AggregatorExecutor_FunctionBased() : base("AggregatorExecutor") { }
-
+        [MessageHandler]
         public ValueTask<string> HandleAsync(
             string message, 
             IWorkflowContext context, 

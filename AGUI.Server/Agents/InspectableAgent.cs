@@ -17,7 +17,7 @@ public static class InspectableAgent
     public static AIAgent Create(IChatClient chatClient)
     {
         // Create a basic agent first
-        var baseAgent = chatClient.CreateAIAgent(
+        var baseAgent = chatClient.AsAIAgent(
             name: "InspectableAssistant",
             instructions: "You are a helpful assistant that can use client-side tools when available. " +
                          "When tools are available, you can use them to provide more personalized responses based on the user's local environment.");
@@ -40,9 +40,9 @@ public static class InspectableAgent
     /// Middleware that inspects and logs tools available in each agent run.
     /// This demonstrates how to access frontend tools sent by the client.
     /// </summary>
-    private static async IAsyncEnumerable<AgentRunResponseUpdate> InspectToolsMiddleware(
+    private static async IAsyncEnumerable<AgentResponseUpdate> InspectToolsMiddleware(
         IEnumerable<ChatMessage> messages,
-        AgentThread? thread,
+        AgentSession? session,
         AgentRunOptions? options,
         AIAgent innerAgent,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
@@ -58,7 +58,7 @@ public static class InspectableAgent
                 foreach (AITool tool in tools)
                 {
                     // AITool has a ToString() that shows the tool name
-                    Console.WriteLine($"  • {tool}");
+                    Console.WriteLine($"  ï¿½ {tool}");
                 }
                 Console.ResetColor();
             }
@@ -71,7 +71,7 @@ public static class InspectableAgent
         }
 
         // Pass through to the inner agent
-        await foreach (AgentRunResponseUpdate update in innerAgent.RunStreamingAsync(messages, thread, options, cancellationToken))
+        await foreach (AgentResponseUpdate update in innerAgent.RunStreamingAsync(messages, session, options, cancellationToken))
         {
             yield return update;
         }

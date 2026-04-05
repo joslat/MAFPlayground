@@ -1,4 +1,4 @@
-﻿// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
+// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
 // Copyright (c) 2025 Jose Luis
 
 using System.ComponentModel;
@@ -11,7 +11,6 @@ using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.DevUI;
 using Microsoft.Agents.AI.Hosting;
 using Microsoft.Agents.AI.Workflows;
-using Microsoft.Agents.AI.Workflows.Reflection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.AI;
@@ -28,29 +27,29 @@ namespace MAFPlayground.Demos.ClaimsDemo;
 /// 3. ClaimsProcessingAgent - Final processing and confirmation
 /// 
 /// Workflow Flow (Self-Contained):
-/// ┌──────────────────────┐
-/// │ UserInput (Executor) │ → Prompts user for information
-/// └──────────┬───────────┘
-///            ↓
-/// ┌──────────────────────┐
-/// │ ClaimsUserFacing     │ → Gathers customer & claim details
-/// └──────────┬───────────┘
-///            ↓
+/// +----------------------+
+/// � UserInput (Executor) � ? Prompts user for information
+/// +----------------------+
+///            ?
+/// +----------------------+
+/// � ClaimsUserFacing     � ? Gathers customer & claim details
+/// +----------------------+
+///            ?
 ///    [Has enough info?]
-///        ├─ Yes → ClaimsReadyForProcessing
-///        └─ No  → UserInput (loop for more details)
-///            ↓
-/// ┌────────────────────────┐
-/// │ ClaimsReadyForProc     │ → Validates & enriches claim
-/// └──────────┬─────────────┘
-///            ↓
+///        +- Yes ? ClaimsReadyForProcessing
+///        +- No  ? UserInput (loop for more details)
+///            ?
+/// +------------------------+
+/// � ClaimsReadyForProc     � ? Validates & enriches claim
+/// +------------------------+
+///            ?
 ///    [Claim complete?]
-///        ├─ Yes → ClaimsProcessing
-///        └─ No  → ClaimsIntake (feedback + more details)
-///            ↓
-/// ┌──────────────────────┐
-/// │ ClaimsProcessing     │ → Final confirmation & handoff
-/// └──────────────────────┘
+///        +- Yes ? ClaimsProcessing
+///        +- No  ? ClaimsIntake (feedback + more details)
+///            ?
+/// +----------------------+
+/// � ClaimsProcessing     � ? Final confirmation & handoff
+/// +----------------------+
 /// 
 /// Key Features:
 /// - Fully self-contained workflow (no external chat loop needed)
@@ -62,7 +61,7 @@ namespace MAFPlayground.Demos.ClaimsDemo;
 /// - Mock tools for customer and contract data
 /// - DevUI compatible (pure workflow orchestration)
 /// </summary>
-internal static class Demo11_ClaimsWorkflow
+internal static partial class Demo11_ClaimsWorkflow
 {
     private const int MaxIntakeIterations = 15;
 
@@ -109,11 +108,11 @@ internal static class Demo11_ClaimsWorkflow
         Console.WriteLine("\n" + new string('=', 80));
         Console.WriteLine("CLAIMS INTAKE - Interactive Workflow");
         Console.WriteLine(new string('=', 80) + "\n");
-        Console.WriteLine("💡 The workflow will prompt you for information as needed.");
+        Console.WriteLine("?? The workflow will prompt you for information as needed.");
         Console.WriteLine("   Simply respond to the agent's questions.\n");
 
         // Start with "START" signal - UserInputExecutor will prompt
-        await using StreamingRun run = await InProcessExecution.StreamAsync(workflow, "START");
+        await using StreamingRun run = await InProcessExecution.RunStreamingAsync(workflow, "START");
 
         bool shouldExit = false;
 
@@ -121,7 +120,7 @@ internal static class Demo11_ClaimsWorkflow
         {
             switch (evt)
             {
-                case AgentRunUpdateEvent agentUpdate:
+                case AgentResponseUpdateEvent agentUpdate:
                     // Stream agent output in real-time
                     if (!string.IsNullOrEmpty(agentUpdate.Update.Text))
                     {
@@ -132,7 +131,7 @@ internal static class Demo11_ClaimsWorkflow
                 case WorkflowOutputEvent output:
                     Console.WriteLine("\n\n" + new string('=', 80));
                     Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("✅ CLAIM PROCESSED SUCCESSFULLY");
+                    Console.WriteLine("? CLAIM PROCESSED SUCCESSFULLY");
                     Console.ResetColor();
                     Console.WriteLine(new string('=', 80));
                     Console.WriteLine();
@@ -146,16 +145,16 @@ internal static class Demo11_ClaimsWorkflow
             if (shouldExit) break;
         }
 
-        Console.WriteLine("\n✅ Demo 11 Complete!\n");
+        Console.WriteLine("\n? Demo 11 Complete!\n");
         Console.WriteLine("Key Concepts Demonstrated:");
-        Console.WriteLine("  ✓ Self-contained workflow with UserInputExecutor");
-        Console.WriteLine("  ✓ Conversational claims intake with iterative refinement");
-        Console.WriteLine("  ✓ Customer identification (by ID or name lookup)");
-        Console.WriteLine("  ✓ Contract resolution and validation");
-        Console.WriteLine("  ✓ Structured feedback loops between agents");
-        Console.WriteLine($"  ✓ Max iteration safety cap ({MaxIntakeIterations})");
-        Console.WriteLine("  ✓ Mock tools for customer and contract services");
-        Console.WriteLine("  ✓ DevUI compatible (pure workflow orchestration)\n");
+        Console.WriteLine("  ? Self-contained workflow with UserInputExecutor");
+        Console.WriteLine("  ? Conversational claims intake with iterative refinement");
+        Console.WriteLine("  ? Customer identification (by ID or name lookup)");
+        Console.WriteLine("  ? Contract resolution and validation");
+        Console.WriteLine("  ? Structured feedback loops between agents");
+        Console.WriteLine($"  ? Max iteration safety cap ({MaxIntakeIterations})");
+        Console.WriteLine("  ? Mock tools for customer and contract services");
+        Console.WriteLine("  ? DevUI compatible (pure workflow orchestration)\n");
     }
 
     /// <summary>
@@ -202,7 +201,9 @@ internal static class Demo11_ClaimsWorkflow
         new ChatClientAgent(chat, new ChatClientAgentOptions
         {
             Name = "ClaimsUserFacingAgent",
-            Instructions = """
+            ChatOptions = new()
+            {
+                Instructions = """
                 You are a friendly and professional claims intake specialist.
                 
                 Your goal is to gather enough information to start the claims process:
@@ -259,8 +260,6 @@ internal static class Demo11_ClaimsWorkflow
                 
                 Always use the structured JSON format for decision-making.
                 """,
-            ChatOptions = new()
-            {
                 Tools = tools,
                 ResponseFormat = ChatResponseFormat.ForJsonSchema<IntakeDecision>()
             }
@@ -272,7 +271,9 @@ internal static class Demo11_ClaimsWorkflow
         new ChatClientAgent(chat, new ChatClientAgentOptions
         {
             Name = "ClaimsReadyForProcessingAgent",
-            Instructions = """
+            ChatOptions = new()
+            {
+                Instructions = """
                 You are a claims validation and enrichment specialist.
                 
                 Your job is to:
@@ -308,8 +309,6 @@ internal static class Demo11_ClaimsWorkflow
                 
                 Use tools to fetch customer and contract data as needed.
                 """,
-            ChatOptions = new()
-            {
                 Tools = tools,
                 ResponseFormat = ChatResponseFormat.ForJsonSchema<ValidationResult>()
             }
@@ -344,38 +343,37 @@ internal static class Demo11_ClaimsWorkflow
     /// UserInputExecutor - Prompts user for input and handles conversation flow.
     /// This makes the workflow self-contained and DevUI compatible.
     /// </summary>
-    private sealed class UserInputExecutor :
-        ReflectingExecutor<UserInputExecutor>,
-        IMessageHandler<string, ChatMessage>,              // Initial start
-        IMessageHandler<IntakeDecision, ChatMessage>,      // After intake response
-        IMessageHandler<ValidationResult, ChatMessage>     // After validation feedback
+    private sealed partial class UserInputExecutor :
+        Executor
     {
         public UserInputExecutor() : base("UserInput") { }
 
         // Initial kickoff
+        [MessageHandler]
         public ValueTask<ChatMessage> HandleAsync(
             string _,
             IWorkflowContext context,
             CancellationToken cancellationToken = default)
         {
-            Console.WriteLine("👋 Welcome to Claims Intake!");
+            Console.WriteLine("?? Welcome to Claims Intake!");
             Console.WriteLine("Please describe your situation, and I'll help you file a claim.\n");
             return PromptUserAsync();
         }
 
         // After intake agent responds
+        [MessageHandler]
         public async ValueTask<ChatMessage> HandleAsync(
             IntakeDecision decision,
             IWorkflowContext context,
             CancellationToken cancellationToken = default)
         {
             // Display agent's response
-            Console.WriteLine($"\n💬 Agent: {decision.ResponseToUser}\n");
+            Console.WriteLine($"\n?? Agent: {decision.ResponseToUser}\n");
 
             // If ready for validation, no need for more input - return system message
             if (decision.ReadyForValidation)
             {
-                Console.WriteLine("✅ Information complete. Proceeding to validation...\n");
+                Console.WriteLine("? Information complete. Proceeding to validation...\n");
                 return new ChatMessage(ChatRole.System, "PROCEED_TO_VALIDATION");
             }
 
@@ -384,21 +382,22 @@ internal static class Demo11_ClaimsWorkflow
         }
 
         // After validation feedback
+        [MessageHandler]
         public async ValueTask<ChatMessage> HandleAsync(
             ValidationResult validation,
             IWorkflowContext context,
             CancellationToken cancellationToken = default)
         {
             // Display validation feedback
-            Console.WriteLine("\n⚠️  Validation found some missing information:");
+            Console.WriteLine("\n??  Validation found some missing information:");
             foreach (var field in validation.MissingFields)
             {
-                Console.WriteLine($"   • {field}");
+                Console.WriteLine($"   � {field}");
             }
 
             if (validation.SuggestedQuestions.Count > 0)
             {
-                Console.WriteLine("\n💬 Agent: " + validation.SuggestedQuestions[0]);
+                Console.WriteLine("\n?? Agent: " + validation.SuggestedQuestions[0]);
                 Console.WriteLine();
             }
 
@@ -418,13 +417,13 @@ internal static class Demo11_ClaimsWorkflow
             if (input.Equals("quit", StringComparison.OrdinalIgnoreCase) ||
                 input.Equals("q", StringComparison.OrdinalIgnoreCase))
             {
-                Console.WriteLine("\n👋 Goodbye! Your claim was not completed.");
+                Console.WriteLine("\n?? Goodbye! Your claim was not completed.");
                 Environment.Exit(0);
             }
 
             if (string.IsNullOrWhiteSpace(input))
             {
-                Console.WriteLine("⚠️  Please provide some information.");
+                Console.WriteLine("??  Please provide some information.");
                 return PromptUserAsync();
             }
 
@@ -432,21 +431,19 @@ internal static class Demo11_ClaimsWorkflow
         }
     }
 
-    private sealed class ClaimsIntakeExecutor :
-        ReflectingExecutor<ClaimsIntakeExecutor>,
-        IMessageHandler<ChatMessage, IntakeDecision>,
-        IMessageHandler<ValidationResult, IntakeDecision>
+    private sealed partial class ClaimsIntakeExecutor :
+        Executor
     {
         private readonly AIAgent _agent;
-        private readonly AgentThread _thread;
+        private AgentSession? _session;
         
         public ClaimsIntakeExecutor(AIAgent agent) : base("ClaimsIntakeExecutor")
         {
             _agent = agent;
-            _thread = _agent.GetNewThread(); // Create thread for conversation memory
         }
 
         // Initial intake
+        [MessageHandler]
         public async ValueTask<IntakeDecision> HandleAsync(
             ChatMessage message,
             IWorkflowContext context,
@@ -456,6 +453,7 @@ internal static class Demo11_ClaimsWorkflow
         }
 
         // Feedback from validation
+        [MessageHandler]
         public async ValueTask<IntakeDecision> HandleAsync(
             ValidationResult validation,
             IWorkflowContext context,
@@ -503,8 +501,9 @@ internal static class Demo11_ClaimsWorkflow
             Console.WriteLine("[Processing with conversation memory...]");
             Console.ResetColor();
             
-            var response = await _agent.RunAsync(prompt, _thread, cancellationToken: cancellationToken);
-            var decision = response.Deserialize<IntakeDecision>(System.Text.Json.JsonSerializerOptions.Web);
+            _session ??= await _agent.CreateSessionAsync(cancellationToken);
+            var response = await _agent.RunAsync<IntakeDecision>(prompt, _session, serializerOptions: System.Text.Json.JsonSerializerOptions.Web, cancellationToken: cancellationToken);
+            var decision = response.Result;
             
             // Display only the human-friendly response (not the raw JSON)
             if (!string.IsNullOrEmpty(decision.ResponseToUser))
@@ -541,7 +540,7 @@ internal static class Demo11_ClaimsWorkflow
                 if (state.IntakeIteration >= MaxIntakeIterations)
                 {
                     Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.WriteLine($"⚠️ Max intake iterations ({MaxIntakeIterations}) reached");
+                    Console.WriteLine($"?? Max intake iterations ({MaxIntakeIterations}) reached");
                     Console.ResetColor();
                     decision.ReadyForValidation = true; // Force proceed
                 }
@@ -554,19 +553,17 @@ internal static class Demo11_ClaimsWorkflow
         }
     }
 
-    private sealed class ClaimsValidationExecutor :
-        ReflectingExecutor<ClaimsValidationExecutor>,
-        IMessageHandler<IntakeDecision, ValidationResult>
+    private sealed partial class ClaimsValidationExecutor :
+        Executor
     {
         private readonly AIAgent _agent;
-        private readonly AgentThread _thread;
+        private AgentSession? _session;
         
         public ClaimsValidationExecutor(AIAgent agent) : base("ClaimsValidationExecutor")
         {
             _agent = agent;
-            _thread = _agent.GetNewThread(); // Create thread for conversation memory
         }
-
+        [MessageHandler]
         public async ValueTask<ValidationResult> HandleAsync(
             IntakeDecision decision,
             IWorkflowContext context,
@@ -598,14 +595,15 @@ internal static class Demo11_ClaimsWorkflow
             Console.WriteLine("[Validating with conversation memory...]");
             Console.ResetColor();
             
-            var response = await _agent.RunAsync(prompt, _thread, cancellationToken: cancellationToken);
-            var validation = response.Deserialize<ValidationResult>(System.Text.Json.JsonSerializerOptions.Web);
+            _session ??= await _agent.CreateSessionAsync(cancellationToken);
+            var response = await _agent.RunAsync<ValidationResult>(prompt, _session, serializerOptions: System.Text.Json.JsonSerializerOptions.Web, cancellationToken: cancellationToken);
+            var validation = response.Result;
             
             // Display validation summary (not the raw JSON)
             Console.ForegroundColor = ConsoleColor.Magenta;
             if (validation.Ready)
             {
-                Console.WriteLine("✅ Validation passed! Claim is complete.");
+                Console.WriteLine("? Validation passed! Claim is complete.");
                 Console.ResetColor();
                 Console.WriteLine();
                 
@@ -616,11 +614,11 @@ internal static class Demo11_ClaimsWorkflow
                 };
                 
                 // ========== 1. CLAIM COMPOSITION (What we've built) ==========
-                Console.WriteLine(new string('─', 80));
+                Console.WriteLine(new string('-', 80));
                 Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.WriteLine("📋 CLAIM COMPOSITION (Gathered Information)");
+                Console.WriteLine("?? CLAIM COMPOSITION (Gathered Information)");
                 Console.ResetColor();
-                Console.WriteLine(new string('─', 80));
+                Console.WriteLine(new string('-', 80));
                 Console.WriteLine();
                 
                 // Build the complete claim from state
@@ -640,11 +638,11 @@ internal static class Demo11_ClaimsWorkflow
                 Console.WriteLine();
                 
                 // ========== 2. CLAIM VALIDATION (What the validator resolved) ==========
-                Console.WriteLine(new string('─', 80));
+                Console.WriteLine(new string('-', 80));
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("✅ CLAIM VALIDATION (Validator Output)");
+                Console.WriteLine("? CLAIM VALIDATION (Validator Output)");
                 Console.ResetColor();
-                Console.WriteLine(new string('─', 80));
+                Console.WriteLine(new string('-', 80));
                 Console.WriteLine();
                 
                 var validationJson = JsonSerializer.Serialize(validation, jsonOptions);
@@ -654,11 +652,11 @@ internal static class Demo11_ClaimsWorkflow
                 Console.WriteLine();
                 
                 // ========== 3. CONVERSATION HISTORY (Legal/Audit Trail) ==========
-                Console.WriteLine(new string('─', 80));
+                Console.WriteLine(new string('-', 80));
                 Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("💬 CONVERSATION HISTORY (Audit Trail)");
+                Console.WriteLine("?? CONVERSATION HISTORY (Audit Trail)");
                 Console.ResetColor();
-                Console.WriteLine(new string('─', 80));
+                Console.WriteLine(new string('-', 80));
                 Console.WriteLine();
                 
                 Console.ForegroundColor = ConsoleColor.DarkGray;
@@ -685,15 +683,15 @@ internal static class Demo11_ClaimsWorkflow
                 }
                 Console.ResetColor();
                 
-                Console.WriteLine(new string('─', 80));
+                Console.WriteLine(new string('-', 80));
                 Console.WriteLine();
             }
             else
             {
-                Console.WriteLine($"⚠️  Validation found {validation.MissingFields.Count} missing fields.");
+                Console.WriteLine($"??  Validation found {validation.MissingFields.Count} missing fields.");
                 if (validation.BlockingIssues.Count > 0)
                 {
-                    Console.WriteLine($"🚫 Blocking issues: {string.Join(", ", validation.BlockingIssues)}");
+                    Console.WriteLine($"?? Blocking issues: {string.Join(", ", validation.BlockingIssues)}");
                 }
                 Console.ResetColor();
                 Console.WriteLine();
@@ -722,13 +720,12 @@ internal static class Demo11_ClaimsWorkflow
         }
     }
 
-    private sealed class ClaimsProcessingExecutor :
-        ReflectingExecutor<ClaimsProcessingExecutor>,
-        IMessageHandler<ValidationResult, ChatMessage>
+    private sealed partial class ClaimsProcessingExecutor :
+        Executor
     {
         private readonly AIAgent _agent;
         public ClaimsProcessingExecutor(AIAgent agent) : base("ClaimsProcessingExecutor") => _agent = agent;
-
+        [MessageHandler]
         public async ValueTask<ChatMessage> HandleAsync(
             ValidationResult validation,
             IWorkflowContext context,

@@ -1,4 +1,4 @@
-﻿// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
+// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
 // Copyright (c) 2025 Jose Luis
 
 using System.Text;
@@ -7,7 +7,6 @@ using Azure.AI.OpenAI;
 using MAFPlayground.Utils;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Workflows;
-using Microsoft.Agents.AI.Workflows.Reflection;
 using Microsoft.Extensions.AI;
 
 namespace MAFPlayground.Samples;
@@ -19,17 +18,17 @@ namespace MAFPlayground.Samples;
 /// The workflow continues until the Critic approves or max iterations is reached.
 /// 
 /// Workflow Flow:
-/// ┌─────────────┐
-/// │   Writer    │ → Creates/revises content
-/// └──────┬──────┘
-///        ↓
-/// ┌──────────────┐
-/// │   Critic     │ → Reviews and decides
-/// └──────┬───────┘
-///        ↓
+/// +-------------+
+/// �   Writer    � ? Creates/revises content
+/// +-------------+
+///        ?
+/// +--------------+
+/// �   Critic     � ? Reviews and decides
+/// +--------------+
+///        ?
 ///    [Decision]
-///        ├─ Approved → Summary → [Output]
-///        └─ Rejected → Writer (loop-back, max 3 iterations)
+///        +- Approved ? Summary ? [Output]
+///        +- Rejected ? Writer (loop-back, max 3 iterations)
 /// 
 /// Key Features:
 /// - Simple ChatMessage input/output
@@ -37,7 +36,7 @@ namespace MAFPlayground.Samples;
 /// - Clean conditional routing
 /// - Streaming support for real-time feedback
 /// </summary>
-internal static class Sample17_WriterCriticIterationWorkflow
+internal static partial class Sample17_WriterCriticIterationWorkflow
 {
     private const int MaxIterations = 3;
 
@@ -116,13 +115,13 @@ internal static class Sample17_WriterCriticIterationWorkflow
         var initialMessage = new ChatMessage(ChatRole.User,
             "Write a 200-word blog post about AI ethics. Make it thoughtful and engaging.");
 
-        await using StreamingRun run = await InProcessExecution.StreamAsync(workflow, initialMessage);
+        await using StreamingRun run = await InProcessExecution.RunStreamingAsync(workflow, initialMessage);
 
         await foreach (WorkflowEvent evt in run.WatchStreamAsync())
         {
             switch (evt)
             {
-                case AgentRunUpdateEvent agentUpdate:
+                case AgentResponseUpdateEvent agentUpdate:
                     // Stream agent output in real-time
                     if (!string.IsNullOrEmpty(agentUpdate.Update.Text))
                     {
@@ -133,7 +132,7 @@ internal static class Sample17_WriterCriticIterationWorkflow
                 case WorkflowOutputEvent output:
                     Console.WriteLine("\n\n" + new string('=', 80));
                     Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("✅ FINAL APPROVED CONTENT");
+                    Console.WriteLine("? FINAL APPROVED CONTENT");
                     Console.ResetColor();
                     Console.WriteLine(new string('=', 80));
                     Console.WriteLine();
@@ -144,13 +143,13 @@ internal static class Sample17_WriterCriticIterationWorkflow
             }
         }
 
-        Console.WriteLine("\n✅ Sample 17 Complete!\n");
+        Console.WriteLine("\n? Sample 17 Complete!\n");
         Console.WriteLine("Key Concepts Demonstrated:");
-        Console.WriteLine("  ✓ Iterative Writer-Critic loop with conditional routing");
-        Console.WriteLine("  ✓ Shared state for iteration tracking");
-        Console.WriteLine($"  ✓ Max iteration cap ({MaxIterations}) for safety");
-        Console.WriteLine("  ✓ Clean ChatMessage flow throughout");
-        Console.WriteLine("  ✓ Streaming support for real-time feedback\n");
+        Console.WriteLine("  ? Iterative Writer-Critic loop with conditional routing");
+        Console.WriteLine("  ? Shared state for iteration tracking");
+        Console.WriteLine($"  ? Max iteration cap ({MaxIterations}) for safety");
+        Console.WriteLine("  ? Clean ChatMessage flow throughout");
+        Console.WriteLine("  ? Streaming support for real-time feedback\n");
     }
 
     // --------------------- Agent factories ---------------------
@@ -180,15 +179,14 @@ internal static class Sample17_WriterCriticIterationWorkflow
 
     // --------------------- Executors ---------------------
 
-    private sealed class WriterExecutor :
-        ReflectingExecutor<WriterExecutor>,
-        IMessageHandler<ChatMessage, ChatMessage>,
-        IMessageHandler<CriticDecision, ChatMessage>
+    private sealed partial class WriterExecutor :
+        Executor
     {
         private readonly AIAgent _agent;
         public WriterExecutor(AIAgent agent) : base("Writer") => _agent = agent;
 
         // Initial writing
+        [MessageHandler]
         public async ValueTask<ChatMessage> HandleAsync(
             ChatMessage message,
             IWorkflowContext context,
@@ -199,6 +197,7 @@ internal static class Sample17_WriterCriticIterationWorkflow
         }
 
         // Revision based on critic feedback
+        [MessageHandler]
         public async ValueTask<ChatMessage> HandleAsync(
             CriticDecision decision,
             IWorkflowContext context,
@@ -241,13 +240,12 @@ internal static class Sample17_WriterCriticIterationWorkflow
         }
     }
 
-    private sealed class CriticExecutor :
-        ReflectingExecutor<CriticExecutor>,
-        IMessageHandler<ChatMessage, CriticDecision>
+    private sealed partial class CriticExecutor :
+        Executor
     {
         private readonly AIAgent _agent;
         public CriticExecutor(AIAgent agent) : base("Critic") => _agent = agent;
-
+        [MessageHandler]
         public async ValueTask<CriticDecision> HandleAsync(
             ChatMessage message,
             IWorkflowContext context,
@@ -275,7 +273,7 @@ internal static class Sample17_WriterCriticIterationWorkflow
             if (!approved && state.Iteration >= MaxIterations)
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine($"⚠️ Max iterations ({MaxIterations}) reached - auto-approving");
+                Console.WriteLine($"?? Max iterations ({MaxIterations}) reached - auto-approving");
                 Console.ResetColor();
                 approved = true;
                 feedback = "";
@@ -339,13 +337,12 @@ internal static class Sample17_WriterCriticIterationWorkflow
         }
     }
 
-    private sealed class SummaryExecutor :
-        ReflectingExecutor<SummaryExecutor>,
-        IMessageHandler<CriticDecision, ChatMessage>
+    private sealed partial class SummaryExecutor :
+        Executor
     {
         private readonly AIAgent _agent;
         public SummaryExecutor(AIAgent agent) : base("Summary") => _agent = agent;
-
+        [MessageHandler]
         public async ValueTask<ChatMessage> HandleAsync(
             CriticDecision decision,
             IWorkflowContext context,

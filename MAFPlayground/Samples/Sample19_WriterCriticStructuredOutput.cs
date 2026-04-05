@@ -1,4 +1,4 @@
-﻿// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
+// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
 // Copyright (c) 2025 Jose Luis
 
 using System.ComponentModel;
@@ -8,7 +8,6 @@ using Azure.AI.OpenAI;
 using MAFPlayground.Utils;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Workflows;
-using Microsoft.Agents.AI.Workflows.Reflection;
 using Microsoft.Extensions.AI;
 
 namespace MAFPlayground.Samples;
@@ -23,17 +22,17 @@ namespace MAFPlayground.Samples;
 /// type-safe JSON responses from the Critic agent.
 /// 
 /// Workflow Flow:
-/// ┌─────────────┐
-/// │   Writer    │ → Creates/revises content
-/// └──────┬──────┘
-///        ↓
-/// ┌──────────────┐
-/// │   Critic     │ → Reviews and outputs STRUCTURED decision
-/// └──────┬───────┘
-///        ↓
+/// +-------------+
+/// �   Writer    � ? Creates/revises content
+/// +-------------+
+///        ?
+/// +--------------+
+/// �   Critic     � ? Reviews and outputs STRUCTURED decision
+/// +--------------+
+///        ?
 ///    [Decision]
-///        ├─ Approved → Summary → [Output]
-///        └─ Rejected → Writer (loop-back, max 3 iterations)
+///        +- Approved ? Summary ? [Output]
+///        +- Rejected ? Writer (loop-back, max 3 iterations)
 /// 
 /// Key Features:
 /// - Structured output for critic decisions (guaranteed JSON schema)
@@ -41,7 +40,7 @@ namespace MAFPlayground.Samples;
 /// - No manual JSON parsing needed
 /// - Same workflow pattern as Sample17
 /// </summary>
-internal static class Sample19_WriterCriticStructuredOutput
+internal static partial class Sample19_WriterCriticStructuredOutput
 {
     private const int MaxIterations = 3;
 
@@ -96,7 +95,7 @@ internal static class Sample19_WriterCriticStructuredOutput
     {
         Console.WriteLine("=== Sample 19: Writer-Critic with Structured Output ===\n");
         Console.WriteLine($"Writer and Critic will iterate up to {MaxIterations} times until approval.\n");
-        Console.WriteLine("✨ Using OpenAI Structured Output for guaranteed JSON schema compliance.\n");
+        Console.WriteLine("? Using OpenAI Structured Output for guaranteed JSON schema compliance.\n");
 
         // Azure OpenAI setup
         var azureClient = new AzureOpenAIClient(AIConfig.Endpoint, AIConfig.KeyCredential);
@@ -132,13 +131,13 @@ internal static class Sample19_WriterCriticStructuredOutput
         var initialMessage = new ChatMessage(ChatRole.User,
             "Write a 200-word blog post about AI ethics. Make it thoughtful and engaging.");
 
-        await using StreamingRun run = await InProcessExecution.StreamAsync(workflow, initialMessage);
+        await using StreamingRun run = await InProcessExecution.RunStreamingAsync(workflow, initialMessage);
 
         await foreach (WorkflowEvent evt in run.WatchStreamAsync())
         {
             switch (evt)
             {
-                case AgentRunUpdateEvent agentUpdate:
+                case AgentResponseUpdateEvent agentUpdate:
                     // Stream agent output in real-time
                     if (!string.IsNullOrEmpty(agentUpdate.Update.Text))
                     {
@@ -149,7 +148,7 @@ internal static class Sample19_WriterCriticStructuredOutput
                 case WorkflowOutputEvent output:
                     Console.WriteLine("\n\n" + new string('=', 80));
                     Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("✅ FINAL APPROVED CONTENT");
+                    Console.WriteLine("? FINAL APPROVED CONTENT");
                     Console.ResetColor();
                     Console.WriteLine(new string('=', 80));
                     Console.WriteLine();
@@ -160,19 +159,19 @@ internal static class Sample19_WriterCriticStructuredOutput
             }
         }
 
-        Console.WriteLine("\n✅ Sample 19 Complete!\n");
+        Console.WriteLine("\n? Sample 19 Complete!\n");
         Console.WriteLine("Key Concepts Demonstrated:");
-        Console.WriteLine("  ✓ Iterative Writer-Critic loop with conditional routing");
-        Console.WriteLine("  ✓ Shared state for iteration tracking");
-        Console.WriteLine($"  ✓ Max iteration cap ({MaxIterations}) for safety");
-        Console.WriteLine("  ✓ ✨ Structured Output using ChatResponseFormat.ForJsonSchema");
-        Console.WriteLine("  ✓ Type-safe JSON deserialization (no manual parsing)");
-        Console.WriteLine("  ✓ Guaranteed schema compliance from OpenAI\n");
+        Console.WriteLine("  ? Iterative Writer-Critic loop with conditional routing");
+        Console.WriteLine("  ? Shared state for iteration tracking");
+        Console.WriteLine($"  ? Max iteration cap ({MaxIterations}) for safety");
+        Console.WriteLine("  ? ? Structured Output using ChatResponseFormat.ForJsonSchema");
+        Console.WriteLine("  ? Type-safe JSON deserialization (no manual parsing)");
+        Console.WriteLine("  ? Guaranteed schema compliance from OpenAI\n");
         
         Console.WriteLine("Compare with Sample 17:");
-        Console.WriteLine("  • Sample 17: Manual JSON parsing in ParseDecision()");
-        Console.WriteLine("  • Sample 19: Automatic structured output (this sample)");
-        Console.WriteLine("  • Sample 19: No parsing errors, guaranteed schema match\n");
+        Console.WriteLine("  � Sample 17: Manual JSON parsing in ParseDecision()");
+        Console.WriteLine("  � Sample 19: Automatic structured output (this sample)");
+        Console.WriteLine("  � Sample 19: No parsing errors, guaranteed schema match\n");
     }
 
     // --------------------- Agent factories ---------------------
@@ -187,7 +186,9 @@ internal static class Sample19_WriterCriticStructuredOutput
         new ChatClientAgent(chat, new ChatClientAgentOptions
         {
             Name = "Critic",
-            Instructions = """
+            ChatOptions = new()
+            {
+                Instructions = """
                 You are a constructive critic. Review the content and provide specific feedback.
                 
                 You will alway try to provide improvement feedback unless the content is excellent.
@@ -198,9 +199,7 @@ internal static class Sample19_WriterCriticStructuredOutput
                 
                 Be concise but specific in your feedback.
                 """,
-            ChatOptions = new()
-            {
-                // ✨ This is the key: ForJsonSchema enforces the structured output
+                // ? This is the key: ForJsonSchema enforces the structured output
                 ResponseFormat = ChatResponseFormat.ForJsonSchema<CriticDecision>()
             }
         });
@@ -213,14 +212,12 @@ internal static class Sample19_WriterCriticStructuredOutput
 
     // --------------------- Executors ---------------------
 
-    private sealed class WriterExecutor :
-        ReflectingExecutor<WriterExecutor>,
-        IMessageHandler<ChatMessage, ChatMessage>,
-        IMessageHandler<CriticDecision, ChatMessage>
+    private sealed partial class WriterExecutor :
+        Executor
     {
         private readonly AIAgent _agent;
         public WriterExecutor(AIAgent agent) : base("Writer") => _agent = agent;
-
+        [MessageHandler]
         public async ValueTask<ChatMessage> HandleAsync(
             ChatMessage message,
             IWorkflowContext context,
@@ -228,7 +225,7 @@ internal static class Sample19_WriterCriticStructuredOutput
         {
             return await HandleAsyncCore(message, context, cancellationToken);
         }
-
+        [MessageHandler]
         public async ValueTask<ChatMessage> HandleAsync(
             CriticDecision decision,
             IWorkflowContext context,
@@ -269,13 +266,12 @@ internal static class Sample19_WriterCriticStructuredOutput
         }
     }
 
-    private sealed class CriticExecutor :
-        ReflectingExecutor<CriticExecutor>,
-        IMessageHandler<ChatMessage, CriticDecision>
+    private sealed partial class CriticExecutor :
+        Executor
     {
         private readonly AIAgent _agent;
         public CriticExecutor(AIAgent agent) : base("Critic") => _agent = agent;
-
+        [MessageHandler]
         public async ValueTask<CriticDecision> HandleAsync(
             ChatMessage message,
             IWorkflowContext context,
@@ -285,7 +281,7 @@ internal static class Sample19_WriterCriticStructuredOutput
             
             Console.WriteLine($"=== Critic (Iteration {state.Iteration}) ===\n");
 
-            // ✨ Use RunStreamingAsync to get streaming updates, then deserialize at the end
+            // ? Use RunStreamingAsync to get streaming updates, then deserialize at the end
             var updates = _agent.RunStreamingAsync(message, cancellationToken: cancellationToken);
 
             // Stream the output in real-time (for any rationale/explanation)
@@ -298,15 +294,15 @@ internal static class Sample19_WriterCriticStructuredOutput
             }
             Console.WriteLine("\n");
 
-            // ✨ Convert the stream to a response and deserialize the structured output
-            var response = await updates.ToAgentRunResponseAsync();
-            var decision = response.Deserialize<CriticDecision>(System.Text.Json.JsonSerializerOptions.Web);
+            // ? Convert the stream to a response and deserialize the structured output
+            var response = await updates.ToAgentResponseAsync();
+            var decision = System.Text.Json.JsonSerializer.Deserialize<CriticDecision>(response.Text, System.Text.Json.JsonSerializerOptions.Web)!;
 
             // Safety: approve if max iterations reached
             if (!decision.Approved && state.Iteration >= MaxIterations)
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine($"⚠️ Max iterations ({MaxIterations}) reached - auto-approving");
+                Console.WriteLine($"?? Max iterations ({MaxIterations}) reached - auto-approving");
                 Console.ResetColor();
                 decision.Approved = true;
                 decision.Feedback = "";
@@ -331,13 +327,12 @@ internal static class Sample19_WriterCriticStructuredOutput
         }
     }
 
-    private sealed class SummaryExecutor :
-        ReflectingExecutor<SummaryExecutor>,
-        IMessageHandler<CriticDecision, ChatMessage>
+    private sealed partial class SummaryExecutor :
+        Executor
     {
         private readonly AIAgent _agent;
         public SummaryExecutor(AIAgent agent) : base("Summary") => _agent = agent;
-
+        [MessageHandler]
         public async ValueTask<ChatMessage> HandleAsync(
             CriticDecision decision,
             IWorkflowContext context,

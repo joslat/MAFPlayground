@@ -1,4 +1,4 @@
-﻿// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
+// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
 // Copyright (c) 2025 Jose Luis
 
 using System.Text;
@@ -7,12 +7,11 @@ using Azure.AI.OpenAI;
 using MAFPlayground.Utils;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Workflows;
-using Microsoft.Agents.AI.Workflows.Reflection;
 using Microsoft.Extensions.AI;
 
 namespace MAFPlayground.Samples;
 
-internal static class Sample16_ChatWithWorkflow
+internal static partial class Sample16_ChatWithWorkflow
 {
     // --------------------- Shared state kept minimal (history for Summary) ---------------------
     private sealed class FlowState
@@ -91,7 +90,7 @@ internal static class Sample16_ChatWithWorkflow
     public static async Task Execute()
     {
         Console.WriteLine("=== Sample 16: Agent Loop (Visible Switch + Hybrid Streaming) ===\n");
-        Console.WriteLine("Say 'write ...' to trigger Writer→Critic loop until APPROVE.");
+        Console.WriteLine("Say 'write ...' to trigger Writer?Critic loop until APPROVE.");
         Console.WriteLine("Type 'quit' | 'q' | 'exit' | 'done' to end.\n");
 
         // Azure OpenAI setup
@@ -137,7 +136,7 @@ internal static class Sample16_ChatWithWorkflow
         WorkflowVisualizerTool.PrintAll(builder, "Sample 17: Agent Loop (Visible Switch + Hybrid Streaming)");
 
         // Start one run; UserChatTurnExecutor will prompt internally
-        var run = await InProcessExecution.StreamAsync(builder, new ChatMessage(ChatRole.System, "START"));
+        var run = await InProcessExecution.RunStreamingAsync(builder, new ChatMessage(ChatRole.System, "START"));
 
         bool terminate = false;
         while (!terminate)
@@ -184,9 +183,9 @@ internal static class Sample16_ChatWithWorkflow
         new ChatClientAgent(chat, """
             You are ManagerAgent. You may address the user directly if the task is not related to writing AND must end with a single JSON control line:
             {"route":"WRITER|REPLY|QUIT"}
-            - If the user asks to write/compose/create text respond wiht → WRITER. You do not address this directly if the task is about writing. You delegate it to the Writer.
-            - If the user says quit|q|exit|done → QUIT.
-            - Else → REPLY (and your prior text is your message to the user).
+            - If the user asks to write/compose/create text respond wiht ? WRITER. You do not address this directly if the task is about writing. You delegate it to the Writer.
+            - If the user says quit|q|exit|done ? QUIT.
+            - Else ? REPLY (and your prior text is your message to the user).
             Stream your helpful text normally; the very last line must be the JSON.
             """);
 
@@ -215,21 +214,19 @@ internal static class Sample16_ChatWithWorkflow
         new ChatClientAgent(chat, """
             You are SummaryAgent. Stream the final message to the user.
             If an approved draft is provided, present that as the final output.
-            If the manager’s direct reply is provided, present that message.
+            If the manager�s direct reply is provided, present that message.
             Do not output any routing JSON.
             """);
 
     // --------------------- Executors ---------------------
 
-    private sealed class UserChatTurnExecutor :
-        ReflectingExecutor<UserChatTurnExecutor>,
-        IMessageHandler<ChatMessage, ChatMessage>,
-        IMessageHandler<RoutingToken, ChatMessage>,      // Concrete type from Manager→Summary→User
-        IMessageHandler<CriticDecision, ChatMessage>     // Concrete type from Critic→Summary→User
+    private sealed partial class UserChatTurnExecutor :
+        Executor
     {
         public UserChatTurnExecutor() : base("UserChatTurnExecutor") { }
 
         // Handler for ChatMessage (initial workflow start)
+        [MessageHandler]
         public async ValueTask<ChatMessage> HandleAsync(
             ChatMessage _,
             IWorkflowContext context,
@@ -239,6 +236,7 @@ internal static class Sample16_ChatWithWorkflow
         }
 
         // Handler for RoutingToken (from Summary after Manager direct reply)
+        [MessageHandler]
         public async ValueTask<ChatMessage> HandleAsync(
             RoutingToken _,
             IWorkflowContext context,
@@ -248,6 +246,7 @@ internal static class Sample16_ChatWithWorkflow
         }
 
         // Handler for CriticDecision (from Summary after Critic approval)
+        [MessageHandler]
         public async ValueTask<ChatMessage> HandleAsync(
             CriticDecision _,
             IWorkflowContext context,
@@ -274,13 +273,12 @@ internal static class Sample16_ChatWithWorkflow
         }
     }
 
-    private sealed class ManagerAgentExecutor :
-        ReflectingExecutor<ManagerAgentExecutor>,
-        IMessageHandler<ChatMessage, RoutingToken>
+    private sealed partial class ManagerAgentExecutor :
+        Executor
     {
         private readonly AIAgent _agent;
         public ManagerAgentExecutor(AIAgent agent) : base("ManagerAgentExecutor") => _agent = agent;
-
+        [MessageHandler]
         public async ValueTask<RoutingToken> HandleAsync(
             ChatMessage message,
             IWorkflowContext context,
@@ -350,20 +348,18 @@ internal static class Sample16_ChatWithWorkflow
         }
     }
 
-    private sealed class WriterAgentExecutor :
-        ReflectingExecutor<WriterAgentExecutor>,
-        IMessageHandler<RoutingToken, WrittenContent>,
-        IMessageHandler<CriticDecision, WrittenContent>
+    private sealed partial class WriterAgentExecutor :
+        Executor
     {
         private readonly AIAgent _agent;
         public WriterAgentExecutor(AIAgent agent) : base("WriterAgentExecutor") => _agent = agent;
-
+        [MessageHandler]
         public async ValueTask<WrittenContent> HandleAsync(
             RoutingToken token,
             IWorkflowContext context,
             CancellationToken cancellationToken = default)
             => await ProduceAsync(token.OriginalMessage.Text ?? "", 1, context, cancellationToken);
-
+        [MessageHandler]
         public async ValueTask<WrittenContent> HandleAsync(
             CriticDecision decision,
             IWorkflowContext context,
@@ -403,14 +399,13 @@ internal static class Sample16_ChatWithWorkflow
         }
     }
 
-    private sealed class CriticAgentExecutor :
-        ReflectingExecutor<CriticAgentExecutor>,
-        IMessageHandler<WrittenContent, CriticDecision>
+    private sealed partial class CriticAgentExecutor :
+        Executor
     {
         private readonly AIAgent _agent;
         private const int MaxIterations = 2;
         public CriticAgentExecutor(AIAgent agent) : base("CriticAgentExecutor") => _agent = agent;
-
+        [MessageHandler]
         public async ValueTask<CriticDecision> HandleAsync(
             WrittenContent content,
             IWorkflowContext context,
@@ -493,15 +488,14 @@ internal static class Sample16_ChatWithWorkflow
         }
     }
 
-    private sealed class SummaryAgentExecutor :
-        ReflectingExecutor<SummaryAgentExecutor>,
-        IMessageHandler<RoutingToken, IOutputContent>,
-        IMessageHandler<CriticDecision, IOutputContent>
+    private sealed partial class SummaryAgentExecutor :
+        Executor
     {
         private readonly AIAgent _agent;
         public SummaryAgentExecutor(AIAgent agent) : base("SummaryAgentExecutor") => _agent = agent;
 
         // Handler for RoutingToken (from Manager's REPLY path)
+        [MessageHandler]
         public async ValueTask<IOutputContent> HandleAsync(
             RoutingToken token,
             IWorkflowContext context,
@@ -509,6 +503,7 @@ internal static class Sample16_ChatWithWorkflow
             => await ProcessSummaryAsync(token, context, cancellationToken);
 
         // Handler for CriticDecision (from Critic's approved path)
+        [MessageHandler]
         public async ValueTask<IOutputContent> HandleAsync(
             CriticDecision decision,
             IWorkflowContext context,
@@ -542,12 +537,11 @@ internal static class Sample16_ChatWithWorkflow
         }
     }
 
-    private sealed class GoodbyeExecutor :
-        ReflectingExecutor<GoodbyeExecutor>,
-        IMessageHandler<RoutingToken, RoutingToken>
+    private sealed partial class GoodbyeExecutor :
+        Executor
     {
         public GoodbyeExecutor() : base("GoodbyeExecutor") { }
-
+        [MessageHandler]
         public async ValueTask<RoutingToken> HandleAsync(
             RoutingToken token,
             IWorkflowContext context,

@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 // Modified for MAFPlayground by Jose Luis Latorre
 
@@ -12,11 +12,11 @@ Console.OutputEncoding = System.Text.Encoding.UTF8;
 
 string serverUrl = Environment.GetEnvironmentVariable("AGUI_SERVER_URL") ?? "http://localhost:8888";
 
-Console.WriteLine(new string('═', 80));
+Console.WriteLine(new string('-', 80));
 Console.ForegroundColor = ConsoleColor.Cyan;
 Console.WriteLine("=== AG-UI Client ===");
 Console.ResetColor();
-Console.WriteLine(new string('═', 80));
+Console.WriteLine(new string('-', 80));
 Console.WriteLine();
 Console.WriteLine($"Connecting to AG-UI server at: {serverUrl}");
 Console.WriteLine();
@@ -42,43 +42,43 @@ AITool[] frontendTools =
 ];
 
 Console.ForegroundColor = ConsoleColor.Magenta;
-Console.WriteLine("📱 Frontend Tools Registered:");
-Console.WriteLine("   • GetUserLocation - Get simulated GPS location");
-Console.WriteLine("   • ReadClientSensors - Read simulated sensor data");
-Console.WriteLine("   • GetClientSystemInfo - Get client system information");
+Console.WriteLine("?? Frontend Tools Registered:");
+Console.WriteLine("   � GetUserLocation - Get simulated GPS location");
+Console.WriteLine("   � ReadClientSensors - Read simulated sensor data");
+Console.WriteLine("   � GetClientSystemInfo - Get client system information");
 Console.ResetColor();
 Console.WriteLine();
 
 // Create agent with frontend tools
-AIAgent agent = chatClient.CreateAIAgent(
+AIAgent agent = chatClient.AsAIAgent(
     name: "agui-client",
     description: "AG-UI Client Agent with frontend tools",
     tools: frontendTools);
 
-AgentThread thread = agent.GetNewThread();
+var session = await agent.CreateSessionAsync();
 List<ChatMessage> messages =
 [
     new(ChatRole.System, "You are a helpful assistant with access to client-side tools for location, sensors, and system information.")
 ];
 
-Console.WriteLine("✅ Connected to AG-UI server!");
+Console.WriteLine("? Connected to AG-UI server!");
 Console.WriteLine();
-Console.WriteLine("💡 Features:");
-Console.WriteLine("   • Type your message and press Enter");
-Console.WriteLine("   • Responses stream in real-time");
-Console.WriteLine("   • Frontend tools execute locally on the client");
-Console.WriteLine("   • Backend tools execute on the server (if server supports them)");
-Console.WriteLine("   • Tool calls are displayed with their parameters and results");
-Console.WriteLine("   • Conversation context is maintained");
-Console.WriteLine("   • Type ':q' or 'quit' to exit");
+Console.WriteLine("?? Features:");
+Console.WriteLine("   � Type your message and press Enter");
+Console.WriteLine("   � Responses stream in real-time");
+Console.WriteLine("   � Frontend tools execute locally on the client");
+Console.WriteLine("   � Backend tools execute on the server (if server supports them)");
+Console.WriteLine("   � Tool calls are displayed with their parameters and results");
+Console.WriteLine("   � Conversation context is maintained");
+Console.WriteLine("   � Type ':q' or 'quit' to exit");
 Console.WriteLine();
-Console.WriteLine("💡 Try asking:");
-Console.WriteLine("   • Where am I located?");
-Console.WriteLine("   • What are my sensor readings?");
-Console.WriteLine("   • What's my system information?");
-Console.WriteLine("   • What's the weather in Paris? (if server has backend tools)");
+Console.WriteLine("?? Try asking:");
+Console.WriteLine("   � Where am I located?");
+Console.WriteLine("   � What are my sensor readings?");
+Console.WriteLine("   � What's my system information?");
+Console.WriteLine("   � What's the weather in Paris? (if server has backend tools)");
 Console.WriteLine();
-Console.WriteLine(new string('═', 80));
+Console.WriteLine(new string('-', 80));
 
 try
 {
@@ -94,7 +94,7 @@ try
         if (string.IsNullOrWhiteSpace(message))
         {
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("⚠️  Request cannot be empty.");
+            Console.WriteLine("??  Request cannot be empty.");
             Console.ResetColor();
             continue;
         }
@@ -103,7 +103,7 @@ try
         {
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("👋 Goodbye! Thanks for using AG-UI Client.");
+            Console.WriteLine("?? Goodbye! Thanks for using AG-UI Client.");
             Console.ResetColor();
             break;
         }
@@ -120,7 +120,7 @@ try
         Console.Write("Assistant: ");
         Console.ResetColor();
 
-        await foreach (AgentRunResponseUpdate update in agent.RunStreamingAsync(messages, thread))
+        await foreach (AgentResponseUpdate update in agent.RunStreamingAsync(messages, session))
         {
             ChatResponseUpdate chatUpdate = update.AsChatResponseUpdate();
 
@@ -149,7 +149,7 @@ try
                     case FunctionCallContent functionCallContent:
                         Console.WriteLine(); // New line before tool call
                         Console.ForegroundColor = ConsoleColor.Magenta;
-                        Console.WriteLine($"🔧 [Tool Call: {functionCallContent.Name}]");
+                        Console.WriteLine($"?? [Tool Call: {functionCallContent.Name}]");
                         
                         // Display individual parameters
                         if (functionCallContent.Arguments != null)
@@ -165,12 +165,12 @@ try
 
                     case FunctionResultContent functionResultContent:
                         Console.ForegroundColor = ConsoleColor.Blue;
-                        Console.WriteLine($"✓ [Tool Result - CallId: {functionResultContent.CallId}]");
+                        Console.WriteLine($"? [Tool Result - CallId: {functionResultContent.CallId}]");
                         
                         if (functionResultContent.Exception != null)
                         {
                             Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine($"   ❌ Exception: {functionResultContent.Exception.Message}");
+                            Console.WriteLine($"   ? Exception: {functionResultContent.Exception.Message}");
                         }
                         else if (functionResultContent.Result != null)
                         {
@@ -192,7 +192,7 @@ try
 
                     case ErrorContent errorContent:
                         Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine($"\n❌ Error: {errorContent.Message}");
+                        Console.WriteLine($"\n? Error: {errorContent.Message}");
                         Console.ResetColor();
                         break;
                 }
@@ -210,13 +210,13 @@ catch (HttpRequestException ex)
 {
     Console.WriteLine();
     Console.ForegroundColor = ConsoleColor.Red;
-    Console.WriteLine($"❌ Connection error: {ex.Message}");
+    Console.WriteLine($"? Connection error: {ex.Message}");
     Console.WriteLine();
-    Console.WriteLine("💡 Make sure the AG-UI server is running:");
+    Console.WriteLine("?? Make sure the AG-UI server is running:");
     Console.WriteLine("   cd AGUI.Server");
     Console.WriteLine("   dotnet run");
     Console.WriteLine();
-    Console.WriteLine("💡 Or use the launch script from solution root:");
+    Console.WriteLine("?? Or use the launch script from solution root:");
     Console.WriteLine("   .\\start-agui.ps1");
     Console.ResetColor();
 }
@@ -224,7 +224,7 @@ catch (Exception ex)
 {
     Console.WriteLine();
     Console.ForegroundColor = ConsoleColor.Red;
-    Console.WriteLine($"❌ An error occurred: {ex.Message}");
+    Console.WriteLine($"? An error occurred: {ex.Message}");
     Console.WriteLine();
     Console.WriteLine($"Stack trace:");
     Console.WriteLine(ex.StackTrace);
@@ -232,9 +232,9 @@ catch (Exception ex)
 }
 
 Console.WriteLine();
-Console.WriteLine(new string('═', 80));
-Console.WriteLine("✅ AG-UI Client session ended.");
-Console.WriteLine(new string('═', 80));
+Console.WriteLine(new string('-', 80));
+Console.WriteLine("? AG-UI Client session ended.");
+Console.WriteLine(new string('-', 80));
 
 // ====================================
 // Frontend Tool Implementations
@@ -260,7 +260,7 @@ static string GetUserLocation()
         Accuracy = "10 meters"
     };
 
-    return $"Amsterdam, Netherlands (Lat: {location.Latitude}°N, Lon: {location.Longitude}°E, Accuracy: {location.Accuracy})";
+    return $"Amsterdam, Netherlands (Lat: {location.Latitude}�N, Lon: {location.Longitude}�E, Accuracy: {location.Accuracy})";
 }
 
 /// <summary>
@@ -285,7 +285,7 @@ static string ReadClientSensors()
         Timestamp = DateTime.Now
     };
 
-    return $"Temperature: {sensorData.Temperature}°C, Humidity: {sensorData.Humidity}%, Air Quality: {sensorData.AirQualityLevel} (AQI: {sensorData.AirQualityIndex})";
+    return $"Temperature: {sensorData.Temperature}�C, Humidity: {sensorData.Humidity}%, Air Quality: {sensorData.AirQualityLevel} (AQI: {sensorData.AirQualityIndex})";
 }
 
 /// <summary>

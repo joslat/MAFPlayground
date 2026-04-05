@@ -13,16 +13,16 @@ public static class RequirementsAgent
 {
     public static ChatClientAgent Create(IChatClient chatClient)
     {
-        return chatClient.CreateAIAgent(new ChatClientAgentOptions(
-            name: "RequirementsAnalyst",
-            instructions: """
+        return chatClient.AsAIAgent(new ChatClientAgentOptions
+        {
+            Name = "RequirementsAnalyst",
+            ChatOptions = new ChatOptions
+            {
+                Instructions = """
                 Extract structured workshop requirements from the user's request.
                 Identify: goal, audience level, duration, focus areas, and prerequisites.
                 Be specific and realistic in your extraction.
-                """)
-        {
-            ChatOptions = new()
-            {
+                """,
                 ResponseFormat = Microsoft.Extensions.AI.ChatResponseFormat.ForJsonSchema<WorkshopRequirements>()
             }
         });

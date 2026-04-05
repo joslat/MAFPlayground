@@ -1,4 +1,4 @@
-﻿// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
+// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
 // Copyright (c) 2025 Jose Luis Latorre
 
 using Azure.AI.OpenAI;
@@ -39,7 +39,9 @@ internal static class Demo03_ChatWithSuperPoweredAssistant
             new ChatClientAgentOptions
             {
                 Name = "PersonalAssistant",
-                Instructions = """
+                ChatOptions = new ChatOptions
+                {
+                    Instructions = """
                     You are Johnny, a fun, friendly and helpful personal assistant. 
                     
                     You can:
@@ -65,8 +67,6 @@ internal static class Demo03_ChatWithSuperPoweredAssistant
                     Keep your responses conversational and engaging. Remember context from previous
                     messages in the conversation.
                     """,
-                ChatOptions = new ChatOptions
-                {
                     Tools = [
                         AIFunctionFactory.Create(SuperPoweredAssistantTools.GetCurrentDate),
                         AIFunctionFactory.Create(SuperPoweredAssistantTools.GetWeather),
@@ -80,15 +80,15 @@ internal static class Demo03_ChatWithSuperPoweredAssistant
                 }
             });
 
-        // Create a new thread.
-        AgentThread thread = assistant.GetNewThread();
+        // Create a new session.
+        var session = await assistant.CreateSessionAsync();
 
-        Console.WriteLine("🤖 Johnny (Personal Assistant) is ready to help!\n");
-        Console.WriteLine("💡 You can ask Johnny to:");
-        Console.WriteLine("   • Check your calendar and weather");
-        Console.WriteLine("   • Find and book restaurants");
-        Console.WriteLine("   • Arrange transportation (taxi, Uber, Lyft)");
-        Console.WriteLine("   • Manage your schedule");
+        Console.WriteLine("?? Johnny (Personal Assistant) is ready to help!\n");
+        Console.WriteLine("?? You can ask Johnny to:");
+        Console.WriteLine("   � Check your calendar and weather");
+        Console.WriteLine("   � Find and book restaurants");
+        Console.WriteLine("   � Arrange transportation (taxi, Uber, Lyft)");
+        Console.WriteLine("   � Manage your schedule");
         Console.WriteLine();
         Console.WriteLine("Type 'q' or 'quit' to exit the conversation.\n");
         Console.WriteLine(new string('=', 80));
@@ -115,7 +115,7 @@ internal static class Demo03_ChatWithSuperPoweredAssistant
             {
                 Console.WriteLine();
                 Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("👋 Goodbye! Johnny is signing off.");
+                Console.WriteLine("?? Goodbye! Johnny is signing off.");
                 Console.ResetColor();
                 break;
             }
@@ -128,13 +128,13 @@ internal static class Demo03_ChatWithSuperPoweredAssistant
 
             try
             {
-                var response = await assistant.RunAsync(userInput, thread);
+                var response = await assistant.RunAsync(userInput, session);
                 Console.WriteLine(response.Text);
             }
             catch (Exception ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"❌ Oops! Something went wrong: {ex.Message}");
+                Console.WriteLine($"? Oops! Something went wrong: {ex.Message}");
                 Console.ResetColor();
             }
 
@@ -142,6 +142,6 @@ internal static class Demo03_ChatWithSuperPoweredAssistant
         }
 
         Console.WriteLine();
-        Console.WriteLine("✅ Demo Complete: Interactive chat session ended.");
+        Console.WriteLine("? Demo Complete: Interactive chat session ended.");
     }
 }

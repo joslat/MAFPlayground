@@ -13,9 +13,12 @@ public static class DiscoveryAgent
 {
     public static ChatClientAgent Create(IChatClient chatClient, IEnumerable<AITool> tools)
     {
-        return chatClient.CreateAIAgent(new ChatClientAgentOptions(
-            name: "DiscoveryAgent",
-            instructions: """
+        return chatClient.AsAIAgent(new ChatClientAgentOptions
+        {
+            Name = "DiscoveryAgent",
+            ChatOptions = new ChatOptions
+            {
+                Instructions = """
                 You are a training content discovery specialist with access to multiple content sources.
                 
                 Your task is to discover relevant training materials that align with workshop requirements.
@@ -36,10 +39,7 @@ public static class DiscoveryAgent
                 - Official documentation and well-maintained resources
                 
                 Return a list of training candidates ranked by relevance (0.0-1.0).
-                """)
-        {
-            ChatOptions = new ChatOptions
-            {
+                """,
                 Tools = tools.ToList()
             }
         });

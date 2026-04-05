@@ -1,4 +1,4 @@
-﻿// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
+// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
 // Copyright (c) 2025 Jose Luis
 
 using System.ComponentModel;
@@ -10,7 +10,6 @@ using MAFPlayground.Demos.ClaimsDemo;
 using MAFPlayground.Utils;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Workflows;
-using Microsoft.Agents.AI.Workflows.Reflection;
 using Microsoft.Extensions.AI;
 
 namespace MAFPlayground.Demos.ClaimsDemo;
@@ -28,10 +27,10 @@ namespace MAFPlayground.Demos.ClaimsDemo;
 /// - Context state operations only in aggregator and non-fan-out executors
 /// 
 /// Critical Pattern (discovered through Test01-Test06):
-/// ⚠️  FAN-OUT EXECUTORS: NO context.ReadStateAsync() or context.QueueStateUpdateAsync()
-/// ✅ FAN-OUT EXECUTOR (PropertyTheftFanOut): CAN use state BEFORE SendMessageAsync()
-/// ✅ AGGREGATOR: CAN use state freely to store collected findings
-/// ✅ OTHER EXECUTORS: CAN use state freely
+/// ??  FAN-OUT EXECUTORS: NO context.ReadStateAsync() or context.QueueStateUpdateAsync()
+/// ? FAN-OUT EXECUTOR (PropertyTheftFanOut): CAN use state BEFORE SendMessageAsync()
+/// ? AGGREGATOR: CAN use state freely to store collected findings
+/// ? OTHER EXECUTORS: CAN use state freely
 /// 
 /// Takes a validated claim (ValidationResult from Demo11) and processes it through
 /// a comprehensive fraud detection pipeline:
@@ -46,7 +45,7 @@ namespace MAFPlayground.Demos.ClaimsDemo;
 /// 5. FraudDecisionAgent - Analyzes aggregated data and makes final fraud determination
 /// 6. OutcomePresenterAgent - Generates professional email to insurance representative
 /// </summary>
-internal static class Demo12_ClaimsFraudDetection
+internal static partial class Demo12_ClaimsFraudDetection
 {
     // --------------------- Shared state ---------------------
     // FraudAnalysisState is now in SharedClaimsData.cs (shared across demos)
@@ -117,13 +116,13 @@ internal static class Demo12_ClaimsFraudDetection
         Console.WriteLine($"  Amount: ${mockClaim.PurchasePrice:N2}");
         Console.WriteLine();
 
-        await using StreamingRun run = await InProcessExecution.StreamAsync(workflow, mockClaim);
+        await using StreamingRun run = await InProcessExecution.RunStreamingAsync(workflow, mockClaim);
 
         await foreach (WorkflowEvent evt in run.WatchStreamAsync())
         {
             switch (evt)
             {
-                case AgentRunUpdateEvent agentUpdate:
+                case AgentResponseUpdateEvent agentUpdate:
                     if (!string.IsNullOrEmpty(agentUpdate.Update.Text))
                     {
                         Console.Write(agentUpdate.Update.Text);
@@ -133,7 +132,7 @@ internal static class Demo12_ClaimsFraudDetection
                 case WorkflowOutputEvent output:
                     Console.WriteLine("\n\n" + new string('=', 80));
                     Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("✅ FRAUD ANALYSIS COMPLETE");
+                    Console.WriteLine("? FRAUD ANALYSIS COMPLETE");
                     Console.ResetColor();
                     Console.WriteLine(new string('=', 80));
                     Console.WriteLine();
@@ -144,19 +143,19 @@ internal static class Demo12_ClaimsFraudDetection
             }
         }
 
-        Console.WriteLine("\n✅ Demo 12 Complete!\n");
+        Console.WriteLine("\n? Demo 12 Complete!\n");
         Console.WriteLine("Key Concepts Demonstrated:");
-        Console.WriteLine("  ✓ Data quality review before fraud analysis");
-        Console.WriteLine("  ✓ Classification routing by claim type");
-        Console.WriteLine("  ✓ Parallel fraud detection (fan-out/fan-in pattern)");
-        Console.WriteLine("  ✓ OSINT validation with mock marketplace data");
-        Console.WriteLine("  ✓ Customer history and fraud score analysis");
-        Console.WriteLine("  ✓ Transaction-level fraud scoring");
-        Console.WriteLine("  ✓ Polymorphic aggregator (handles 3 different finding types)");
-        Console.WriteLine("  ✓ Data passing via messages (NO state in fan-out executors)");
-        Console.WriteLine("  ✓ State operations in aggregator (stores collected findings)");
-        Console.WriteLine("  ✓ AI-powered fraud decision with confidence scores");
-        Console.WriteLine("  ✓ Professional email generation for case handlers\n");
+        Console.WriteLine("  ? Data quality review before fraud analysis");
+        Console.WriteLine("  ? Classification routing by claim type");
+        Console.WriteLine("  ? Parallel fraud detection (fan-out/fan-in pattern)");
+        Console.WriteLine("  ? OSINT validation with mock marketplace data");
+        Console.WriteLine("  ? Customer history and fraud score analysis");
+        Console.WriteLine("  ? Transaction-level fraud scoring");
+        Console.WriteLine("  ? Polymorphic aggregator (handles 3 different finding types)");
+        Console.WriteLine("  ? Data passing via messages (NO state in fan-out executors)");
+        Console.WriteLine("  ? State operations in aggregator (stores collected findings)");
+        Console.WriteLine("  ? AI-powered fraud decision with confidence scores");
+        Console.WriteLine("  ? Professional email generation for case handlers\n");
     }
 
     private static Workflow BuildFraudDetectionWorkflow(IChatClient chatClient)
@@ -195,7 +194,7 @@ internal static class Demo12_ClaimsFraudDetection
                 condition: dr => dr is not null && dr.Proceed)
             .AddEdge(classificationExec, propertyTheftFanOutExec)
             .AddFanOutEdge(propertyTheftFanOutExec, targets: [osintExec, userHistoryExec, transactionExec])
-            .AddFanInEdge(fraudAggregatorExec, sources: [osintExec, userHistoryExec, transactionExec])
+            .AddFanInBarrierEdge([osintExec, userHistoryExec, transactionExec], fraudAggregatorExec)
             .AddEdge(fraudAggregatorExec, fraudDecisionExec)
             .AddEdge(fraudDecisionExec, outcomeExec)
             .WithOutputFrom(outcomeExec)
@@ -208,7 +207,9 @@ internal static class Demo12_ClaimsFraudDetection
         new ChatClientAgent(chat, new ChatClientAgentOptions
         {
             Name = "DataReviewAgent",
-            Instructions = """
+            ChatOptions = new()
+            {
+                Instructions = """
                 You are a data quality specialist for insurance claims.
                 
                 Review the claim data for:
@@ -220,8 +221,6 @@ internal static class Demo12_ClaimsFraudDetection
                 Provide a quality score (0-100) and list any concerns.
                 Decide whether to proceed with fraud analysis.
                 """,
-            ChatOptions = new()
-            {
                 ResponseFormat = ChatResponseFormat.ForJsonSchema<DataReviewResult>()
             }
         });
@@ -230,7 +229,9 @@ internal static class Demo12_ClaimsFraudDetection
         new ChatClientAgent(chat, new ChatClientAgentOptions
         {
             Name = "OSINTValidatorAgent",
-            Instructions = """
+            ChatOptions = new()
+            {
+                Instructions = """
                 You are an OSINT (Open Source Intelligence) specialist.
                 
                 Check if the reported stolen property is listed for sale online.
@@ -244,8 +245,6 @@ internal static class Demo12_ClaimsFraudDetection
                 - Fraud indicator score (0-100)
                 - Summary of findings
                 """,
-            ChatOptions = new()
-            {
                 Tools = tools,
                 ResponseFormat = ChatResponseFormat.ForJsonSchema<OSINTFinding>()
             }
@@ -255,7 +254,9 @@ internal static class Demo12_ClaimsFraudDetection
         new ChatClientAgent(chat, new ChatClientAgentOptions
         {
             Name = "UserValidationAgent",
-            Instructions = """
+            ChatOptions = new()
+            {
+                Instructions = """
                 You are a customer fraud analyst.
                 
                 Analyze the customer's claim history for suspicious patterns.
@@ -269,8 +270,6 @@ internal static class Demo12_ClaimsFraudDetection
                 
                 Provide customer fraud score (0-100) and summary.
                 """,
-            ChatOptions = new()
-            {
                 Tools = tools,
                 ResponseFormat = ChatResponseFormat.ForJsonSchema<UserHistoryFinding>()
             }
@@ -280,7 +279,9 @@ internal static class Demo12_ClaimsFraudDetection
         new ChatClientAgent(chat, new ChatClientAgentOptions
         {
             Name = "TransactionFraudScoringAgent",
-            Instructions = """
+            ChatOptions = new()
+            {
+                Instructions = """
                 You are a transaction fraud specialist.
                 
                 Analyze this specific claim transaction for fraud indicators:
@@ -297,8 +298,6 @@ internal static class Demo12_ClaimsFraudDetection
                 - Overall transaction fraud score
                 - Summary
                 """,
-            ChatOptions = new()
-            {
                 Tools = tools,
                 ResponseFormat = ChatResponseFormat.ForJsonSchema<TransactionFraudFinding>()
             }
@@ -308,7 +307,9 @@ internal static class Demo12_ClaimsFraudDetection
         new ChatClientAgent(chat, new ChatClientAgentOptions
         {
             Name = "FraudDecisionAgent",
-            Instructions = """
+            ChatOptions = new()
+            {
+                Instructions = """
                 You are a fraud decision specialist.
                 
                 Analyze ALL the findings from OSINT, User History, and Transaction analysis.
@@ -323,8 +324,6 @@ internal static class Demo12_ClaimsFraudDetection
                 
                 Be thorough but fair. Consider all evidence.
                 """,
-            ChatOptions = new()
-            {
                 ResponseFormat = ChatResponseFormat.ForJsonSchema<FraudDecision>()
             }
         });
@@ -349,13 +348,12 @@ internal static class Demo12_ClaimsFraudDetection
 
     // --------------------- Executors ---------------------
 
-    private sealed class DataReviewExecutor :
-        ReflectingExecutor<DataReviewExecutor>,
-        IMessageHandler<ValidationResult, DataReviewResult>
+    private sealed partial class DataReviewExecutor :
+        Executor
     {
         private readonly AIAgent _agent;
         public DataReviewExecutor(AIAgent agent) : base("DataReview") => _agent = agent;
-
+        [MessageHandler]
         public async ValueTask<DataReviewResult> HandleAsync(
             ValidationResult claim,
             IWorkflowContext context,
@@ -381,8 +379,8 @@ internal static class Demo12_ClaimsFraudDetection
                 Detailed Description: {claim.DetailedDescription}
                 """;
 
-            var response = await _agent.RunAsync(prompt, cancellationToken: cancellationToken);
-            var result = response.Deserialize<DataReviewResult>(JsonSerializerOptions.Web);
+            var response = await _agent.RunAsync<DataReviewResult>(prompt, serializerOptions: JsonSerializerOptions.Web, cancellationToken: cancellationToken);
+            var result = response.Result;
 
             state.DataReview = result;
             await SaveFraudStateAsync(context, state);
@@ -394,12 +392,11 @@ internal static class Demo12_ClaimsFraudDetection
         }
     }
 
-    private sealed class ClassificationRouterExecutor :
-        ReflectingExecutor<ClassificationRouterExecutor>,
-        IMessageHandler<DataReviewResult, string>
+    private sealed partial class ClassificationRouterExecutor :
+        Executor
     {
         public ClassificationRouterExecutor() : base("ClassificationRouter") { }
-
+        [MessageHandler]
         public async ValueTask<string> HandleAsync(
             DataReviewResult review,
             IWorkflowContext context,
@@ -422,12 +419,11 @@ internal static class Demo12_ClaimsFraudDetection
         }
     }
 
-    private sealed class PropertyTheftFanOutExecutor :
-        ReflectingExecutor<PropertyTheftFanOutExecutor>,
-        IMessageHandler<string>
+    private sealed partial class PropertyTheftFanOutExecutor :
+        Executor
     {
         public PropertyTheftFanOutExecutor() : base("PropertyTheftFanOut") { }
-
+        [MessageHandler]
         public async ValueTask HandleAsync(
             string routeType,
             IWorkflowContext context,
@@ -436,27 +432,27 @@ internal static class Demo12_ClaimsFraudDetection
             Console.WriteLine("\n=== Parallel Fraud Detection (Fan-Out) ===");
             Console.WriteLine("Dispatching to 3 fraud detection agents...\n");
             
-            // ✅ Read state HERE (fan-out executor can use state)
+            // ? Read state HERE (fan-out executor can use state)
             var state = await ReadFraudStateAsync(context);
             var claim = state.OriginalClaim!;
             
-            // ✅ Send the CLAIM to all executors (not a string!)
+            // ? Send the CLAIM to all executors (not a string!)
             await context.SendMessageAsync(claim, cancellationToken: cancellationToken);
         }
     }
 
     // ===== REFACTORED EXECUTORS - Now return simple strings =====
 
-    private sealed class OSINTExecutor :
-        ReflectingExecutor<OSINTExecutor>,
-        IMessageHandler<ValidationResult, OSINTFinding>  // ✅ Accept claim directly!
+    private sealed partial class OSINTExecutor :
+        Executor  // ? Accept claim directly!
     {
         private readonly AIAgent _agent;
         public OSINTExecutor(AIAgent agent) : base("OSINT") => _agent = agent;
 
-        // ✅ NO STATE OPERATIONS AT ALL!
+        // ? NO STATE OPERATIONS AT ALL!
+        [MessageHandler]
         public async ValueTask<OSINTFinding> HandleAsync(
-            ValidationResult claim,  // ✅ Claim passed directly from PropertyTheftFanOut!
+            ValidationResult claim,  // ? Claim passed directly from PropertyTheftFanOut!
             IWorkflowContext context,
             CancellationToken cancellationToken = default)
         {
@@ -473,26 +469,26 @@ internal static class Demo12_ClaimsFraudDetection
                 Use check_online_marketplaces tool to search.
                 """;
 
-            var response = await _agent.RunAsync(prompt, cancellationToken: cancellationToken);
-            var finding = response.Deserialize<OSINTFinding>(JsonSerializerOptions.Web);
+            var response = await _agent.RunAsync<OSINTFinding>(prompt, serializerOptions: JsonSerializerOptions.Web, cancellationToken: cancellationToken);
+            var finding = response.Result;
 
-            Console.WriteLine($"✓ OSINT Check Complete - Fraud Score: {finding.FraudIndicatorScore}/100");
+            Console.WriteLine($"? OSINT Check Complete - Fraud Score: {finding.FraudIndicatorScore}/100");
             Console.WriteLine($"[DEBUG - OSINTExecutor] Returning finding directly\n");
             
-            return finding;  // ✅ Return structured finding!
+            return finding;  // ? Return structured finding!
         }
     }
 
-    private sealed class UserHistoryExecutor :
-        ReflectingExecutor<UserHistoryExecutor>,
-        IMessageHandler<ValidationResult, UserHistoryFinding>  // ✅ Accept claim directly!
+    private sealed partial class UserHistoryExecutor :
+        Executor  // ? Accept claim directly!
     {
         private readonly AIAgent _agent;
         public UserHistoryExecutor(AIAgent agent) : base("UserHistory") => _agent = agent;
 
-        // ✅ NO STATE OPERATIONS AT ALL!
+        // ? NO STATE OPERATIONS AT ALL!
+        [MessageHandler]
         public async ValueTask<UserHistoryFinding> HandleAsync(
-            ValidationResult claim,  // ✅ Claim passed directly from PropertyTheftFanOut!
+            ValidationResult claim,  // ? Claim passed directly from PropertyTheftFanOut!
             IWorkflowContext context,
             CancellationToken cancellationToken = default)
         {
@@ -507,26 +503,26 @@ internal static class Demo12_ClaimsFraudDetection
                 Use get_customer_claim_history tool to retrieve past claims.
                 """;
 
-            var response = await _agent.RunAsync(prompt, cancellationToken: cancellationToken);
-            var finding = response.Deserialize<UserHistoryFinding>(JsonSerializerOptions.Web);
+            var response = await _agent.RunAsync<UserHistoryFinding>(prompt, serializerOptions: JsonSerializerOptions.Web, cancellationToken: cancellationToken);
+            var finding = response.Result;
 
-            Console.WriteLine($"✓ User History Check Complete - Customer Fraud Score: {finding.CustomerFraudScore}/100");
+            Console.WriteLine($"? User History Check Complete - Customer Fraud Score: {finding.CustomerFraudScore}/100");
             Console.WriteLine($"[DEBUG - UserHistoryExecutor] Returning finding directly\n");
             
-            return finding;  // ✅ Return structured finding!
+            return finding;  // ? Return structured finding!
         }
     }
 
-    private sealed class TransactionFraudExecutor :
-        ReflectingExecutor<TransactionFraudExecutor>,
-        IMessageHandler<ValidationResult, TransactionFraudFinding>  // ✅ Accept claim directly!
+    private sealed partial class TransactionFraudExecutor :
+        Executor  // ? Accept claim directly!
     {
         private readonly AIAgent _agent;
         public TransactionFraudExecutor(AIAgent agent) : base("TransactionFraud") => _agent = agent;
 
-        // ✅ NO STATE OPERATIONS AT ALL!
+        // ? NO STATE OPERATIONS AT ALL!
+        [MessageHandler]
         public async ValueTask<TransactionFraudFinding> HandleAsync(
-            ValidationResult claim,  // ✅ Claim passed directly from PropertyTheftFanOut!
+            ValidationResult claim,  // ? Claim passed directly from PropertyTheftFanOut!
             IWorkflowContext context,
             CancellationToken cancellationToken = default)
         {
@@ -542,13 +538,13 @@ internal static class Demo12_ClaimsFraudDetection
                 Use get_transaction_risk_profile tool for context.
                 """;
 
-            var response = await _agent.RunAsync(prompt, cancellationToken: cancellationToken);
-            var finding = response.Deserialize<TransactionFraudFinding>(JsonSerializerOptions.Web);
+            var response = await _agent.RunAsync<TransactionFraudFinding>(prompt, serializerOptions: JsonSerializerOptions.Web, cancellationToken: cancellationToken);
+            var finding = response.Result;
 
-            Console.WriteLine($"✓ Transaction Analysis Complete - Fraud Score: {finding.TransactionFraudScore}/100");
+            Console.WriteLine($"? Transaction Analysis Complete - Fraud Score: {finding.TransactionFraudScore}/100");
             Console.WriteLine($"[DEBUG - TransactionFraudExecutor] Returning finding directly\n");
             
-            return finding;  // ✅ Return structured finding!
+            return finding;  // ? Return structured finding!
         }
     }
 
@@ -564,11 +560,8 @@ internal static class Demo12_ClaimsFraudDetection
         public TransactionFraudFinding? TransactionFraudFinding { get; set; }
     }
 
-    private sealed class FraudAggregatorExecutor :
-        ReflectingExecutor<FraudAggregatorExecutor>,
-        IMessageHandler<OSINTFinding, string>,           // ✅ Handle OSINT findings
-        IMessageHandler<UserHistoryFinding, string>,      // ✅ Handle User History findings
-        IMessageHandler<TransactionFraudFinding, string>  // ✅ Handle Transaction findings
+    private sealed partial class FraudAggregatorExecutor :
+        Executor
     {
         private OSINTFinding? _osintFinding;
         private UserHistoryFinding? _userHistoryFinding;
@@ -578,7 +571,8 @@ internal static class Demo12_ClaimsFraudDetection
 
         public FraudAggregatorExecutor() : base("FraudAggregator") { }
 
-        // ✅ Handle OSINT Finding
+        // ? Handle OSINT Finding
+        [MessageHandler]
         public ValueTask<string> HandleAsync(
             OSINTFinding finding, 
             IWorkflowContext context, 
@@ -588,7 +582,8 @@ internal static class Demo12_ClaimsFraudDetection
                 () => { _osintFinding = finding; });
         }
 
-        // ✅ Handle User History Finding
+        // ? Handle User History Finding
+        [MessageHandler]
         public ValueTask<string> HandleAsync(
             UserHistoryFinding finding, 
             IWorkflowContext context, 
@@ -598,7 +593,8 @@ internal static class Demo12_ClaimsFraudDetection
                 () => { _userHistoryFinding = finding; });
         }
 
-        // ✅ Handle Transaction Finding
+        // ? Handle Transaction Finding
+        [MessageHandler]
         public ValueTask<string> HandleAsync(
             TransactionFraudFinding finding, 
             IWorkflowContext context, 
@@ -608,7 +604,7 @@ internal static class Demo12_ClaimsFraudDetection
                 () => { _transactionFinding = finding; });
         }
 
-        // ✅ Common handling logic
+        // ? Common handling logic
         private async ValueTask<string> HandleFindingAsync<T>(
             string sourceName,
             T finding,
@@ -616,7 +612,7 @@ internal static class Demo12_ClaimsFraudDetection
             CancellationToken cancellationToken,
             Action storeFinding)
         {
-            Console.WriteLine($"\n[Aggregator] ✅ HandleAsync CALLED from {sourceName}!");
+            Console.WriteLine($"\n[Aggregator] ? HandleAsync CALLED from {sourceName}!");
             Console.WriteLine($"[Aggregator] Received finding {_receivedCount + 1}/{ExpectedCount}");
             
             storeFinding();  // Store the finding in local field
@@ -627,8 +623,8 @@ internal static class Demo12_ClaimsFraudDetection
             {
                 Console.WriteLine("\n=== All Fraud Findings Collected (Fan-In) ===\n");
                 
-                // ✅ NOW store in state (Test06 pattern - state ops in aggregator work!)
-                Console.WriteLine("[Aggregator] 💾 Storing all findings in shared state...");
+                // ? NOW store in state (Test06 pattern - state ops in aggregator work!)
+                Console.WriteLine("[Aggregator] ?? Storing all findings in shared state...");
                 var state = await ReadFraudStateAsync(context);
                 state.OSINTFinding = _osintFinding;
                 state.UserHistoryFinding = _userHistoryFinding;
@@ -636,7 +632,7 @@ internal static class Demo12_ClaimsFraudDetection
                 await SaveFraudStateAsync(context, state);
                 
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("✅ All findings stored in shared state!");
+                Console.WriteLine("? All findings stored in shared state!");
                 Console.ResetColor();
                 Console.WriteLine();
                 
@@ -654,13 +650,12 @@ internal static class Demo12_ClaimsFraudDetection
         }
     }
 
-    private sealed class FraudDecisionExecutor :
-        ReflectingExecutor<FraudDecisionExecutor>,
-        IMessageHandler<string, FraudDecision>
+    private sealed partial class FraudDecisionExecutor :
+        Executor
     {
         private readonly AIAgent _agent;
         public FraudDecisionExecutor(AIAgent agent) : base("FraudDecision") => _agent = agent;
-
+        [MessageHandler]
         public async ValueTask<FraudDecision> HandleAsync(
             string _,
             IWorkflowContext context,
@@ -685,33 +680,32 @@ internal static class Demo12_ClaimsFraudDetection
                 Provide your final decision with reasoning.
                 """;
 
-            var response = await _agent.RunAsync(prompt, cancellationToken: cancellationToken);
-            var decision = response.Deserialize<FraudDecision>(JsonSerializerOptions.Web);
+            var response = await _agent.RunAsync<FraudDecision>(prompt, serializerOptions: JsonSerializerOptions.Web, cancellationToken: cancellationToken);
+            var decision = response.Result;
 
             state.FraudDecision = decision;
             await SaveFraudStateAsync(context, state);
 
             // Print readable decision
-            Console.WriteLine(new string('─', 80));
+            Console.WriteLine(new string('-', 80));
             Console.ForegroundColor = decision.IsFraud ? ConsoleColor.Red : ConsoleColor.Green;
             Console.WriteLine($"FRAUD DETERMINATION: {(decision.IsFraud ? "LIKELY FRAUD" : "NO FRAUD DETECTED")}");
             Console.ResetColor();
             Console.WriteLine($"Confidence: {decision.ConfidenceScore}%");
             Console.WriteLine($"Recommendation: {decision.Recommendation}");
-            Console.WriteLine(new string('─', 80));
+            Console.WriteLine(new string('-', 80));
             Console.WriteLine();
 
             return decision;
         }
     }
 
-    private sealed class OutcomePresenterExecutor :
-        ReflectingExecutor<OutcomePresenterExecutor>,
-        IMessageHandler<FraudDecision, string>
+    private sealed partial class OutcomePresenterExecutor :
+        Executor
     {
         private readonly AIAgent _agent;
         public OutcomePresenterExecutor(AIAgent agent) : base("OutcomePresenter") => _agent = agent;
-
+        [MessageHandler]
         public async ValueTask<string> HandleAsync(
             FraudDecision decision,
             IWorkflowContext context,

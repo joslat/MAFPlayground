@@ -1,4 +1,4 @@
-﻿//// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
+//// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
 //// Copyright (c) 2025 Jose Luis Latorre
 
 //using Azure.AI.OpenAI;
@@ -24,7 +24,7 @@
 ///// 2. SEO Reviewer, PII Reviewer, Fact Checker, and Style Reviewer provide feedback
 ///// 3. Aggregation executor collects all reviews
 ///// 4. Editor agent synthesizes all feedback and provides final critique
-///// 5. Convert the entire review workflow to an agent using .AsAgent()
+///// 5. Convert the entire review workflow to an agent using .AsAIAgent()
 ///// 6. Use the workflow-agent in a Round Robin group chat with Writer
 ///// 
 ///// This demonstrates:
@@ -78,11 +78,11 @@
 //        // ====================================
 //        Console.WriteLine("\nConverting review workflow to agent...\n");
 
-//        AIAgent reviewWorkflowAgent = reviewWorkflow.AsAgent(
+//        AIAgent reviewWorkflowAgent = reviewWorkflow.AsAIAgent(
 //            "multi-reviewer-agent",
 //            "Agent that provides comprehensive review feedback from SEO, PII, Fact-checking, and Style perspectives");
 
-//        Console.WriteLine("✅ Review workflow converted to agent.\n");
+//        Console.WriteLine("? Review workflow converted to agent.\n");
 
 //        // ====================================
 //        // Step 4: Build Round Robin group chat with Writer + Review Agent
@@ -92,7 +92,7 @@
 //        var groupChatWorkflow = AgentWorkflowBuilder
 //            .CreateGroupChatBuilderWith(agents => new AgentWorkflowBuilder.RoundRobinGroupChatManager(agents)
 //            {
-//                MaximumIterationCount = 4  // Writer → Reviewers → Writer → Reviewers
+//                MaximumIterationCount = 4  // Writer ? Reviewers ? Writer ? Reviewers
 //            })
 //            .AddParticipants([writerAgent, reviewWorkflowAgent])
 //            .Build();
@@ -114,7 +114,7 @@
 //Include facts that can be verified and maintain a professional writing style.")
 //        };
 
-//        await using StreamingRun run = await InProcessExecution.StreamAsync(groupChatWorkflow, initialMessage);
+//        await using StreamingRun run = await InProcessExecution.RunStreamingAsync(groupChatWorkflow, initialMessage);
 //        await run.TrySendMessageAsync(new TurnToken(emitEvents: true));
 
 //        string? currentAgent = null;
@@ -122,7 +122,7 @@
 
 //        await foreach (WorkflowEvent evt in run.WatchStreamAsync().ConfigureAwait(false))
 //        {
-//            if (evt is AgentRunUpdateEvent agentUpdate)
+//            if (evt is AgentResponseUpdateEvent agentUpdate)
 //            {
 //                // Detect agent change
 //                if (agentUpdate.Update.AuthorName != currentAgent)
@@ -150,7 +150,7 @@
 //        }
 
 //        Console.WriteLine();
-//        Console.WriteLine("✅ Sample 12C Complete!");
+//        Console.WriteLine("? Sample 12C Complete!");
 //        Console.WriteLine();
 //        Console.WriteLine("Key Takeaways:");
 //        Console.WriteLine("- Multi-reviewer workflow acts as a single agent");
@@ -182,7 +182,7 @@
 //        // Build the workflow: fan-out to reviewers, aggregate, then editor synthesizes
 //        return new WorkflowBuilder(startExecutor)
 //            .AddFanOutEdge(startExecutor, targets: [seoReviewer, piiReviewer, factChecker, styleReviewer])
-//            .AddFanInEdge(aggregationExecutor, sources: [seoReviewer, piiReviewer, factChecker, styleReviewer])
+//            .AddFanInBarrierEdge(aggregationExecutor, sources: [seoReviewer, piiReviewer, factChecker, styleReviewer])
 //            .AddEdge(aggregationExecutor, editorAgent)
 //            .WithOutputFrom(editorAgent)
 //            .Build();

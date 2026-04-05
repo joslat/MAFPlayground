@@ -1,4 +1,4 @@
-﻿//// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
+//// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
 //// Copyright (c) 2025 Jose Luis Latorre
 
 //using Azure.AI.OpenAI;
@@ -79,7 +79,7 @@
 //        var workflow = AgentWorkflowBuilder
 //            .CreateGroupChatBuilderWith(agents => new AgentWorkflowBuilder.RoundRobinGroupChatManager(agents) 
 //            { 
-//                MaximumIterationCount = 6  // 3 rounds: Writer → Editor → Writer → Editor → Writer → Editor
+//                MaximumIterationCount = 6  // 3 rounds: Writer ? Editor ? Writer ? Editor ? Writer ? Editor
 //            })
 //            .AddParticipants([writerAgent, editorAgent])
 //            .Build();
@@ -100,7 +100,7 @@
 //            new(ChatRole.User, "Write a short story about a mysterious library where books come to life at midnight. Keep it concise but engaging (around 200 words).")
 //        };
 
-//        await using StreamingRun run = await InProcessExecution.StreamAsync(workflow, initialMessage);
+//        await using StreamingRun run = await InProcessExecution.RunStreamingAsync(workflow, initialMessage);
 //        await run.TrySendMessageAsync(new TurnToken(emitEvents: true));
 
 //        string? currentAgent = null;
@@ -108,7 +108,7 @@
 
 //        await foreach (WorkflowEvent evt in run.WatchStreamAsync().ConfigureAwait(false))
 //        {
-//            if (evt is AgentRunUpdateEvent agentUpdate)
+//            if (evt is AgentResponseUpdateEvent agentUpdate)
 //            {
 //                // Detect agent change
 //                if (agentUpdate.Update.AuthorName != currentAgent)
@@ -136,7 +136,7 @@
 //        }
 
 //        Console.WriteLine();
-//        Console.WriteLine("✅ Sample 12 Complete: Round Robin group chat collaboration finished!");
+//        Console.WriteLine("? Sample 12 Complete: Round Robin group chat collaboration finished!");
 //        Console.WriteLine();
 //        Console.WriteLine("Key Takeaways:");
 //        Console.WriteLine("- Writer and Editor collaborated in alternating turns");

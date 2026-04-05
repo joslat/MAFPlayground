@@ -1,9 +1,8 @@
-﻿// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
+// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
 // Copyright (c) 2025 Jose Luis Latorre
 
 using MAFPlayground.Utils;
 using Microsoft.Agents.AI.Workflows;
-using Microsoft.Agents.AI.Workflows.Reflection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,26 +24,26 @@ namespace MAFPlayground.Samples;
 /// 5. Mix of function-based and class-based executors
 /// 
 /// Pipeline Flow:
-/// ┌─────────────┐
-/// │  Analysis   │ (Sequential: Requirements → Risk → Feasibility)
-/// └──────┬──────┘
-///        ↓
-/// ┌─────────────┐
-/// │Specification│ (Sequential: Tech Specs → API Design → Data Model)
-/// └──────┬──────┘
-///        ↓
-/// ┌─────────────────────────────────┐
-/// │   Expert Assessment (Parallel)  │
-/// │  Security │ Performance │ UX    │ → Aggregator
-/// └──────┬──────────────────────────┘
-///        ↓
-/// ┌─────────────┐
-/// │Implementation│ (Sequential: Code → Unit Tests → Integration)
-/// └──────┬──────┘
-///        ↓
-/// ┌─────────────┐
-/// │Quality Control│ → APPROVED → [Deploy]
-/// └─────────────┘ → REJECTED → [Back to Implementation]
+/// +-------------+
+/// �  Analysis   � (Sequential: Requirements ? Risk ? Feasibility)
+/// +-------------+
+///        ?
+/// +-------------+
+/// �Specification� (Sequential: Tech Specs ? API Design ? Data Model)
+/// +-------------+
+///        ?
+/// +---------------------------------+
+/// �   Expert Assessment (Parallel)  �
+/// �  Security � Performance � UX    � ? Aggregator
+/// +---------------------------------+
+///        ?
+/// +-------------+
+/// �Implementation� (Sequential: Code ? Unit Tests ? Integration)
+/// +-------------+
+///        ?
+/// +-------------+
+/// �Quality Control� ? APPROVED ? [Deploy]
+/// +-------------+ ? REJECTED ? [Back to Implementation]
 /// </summary>
 /// <remarks>
 /// This sample demonstrates real-world development processes and shows when to use
@@ -55,7 +54,7 @@ internal static class Sample14_SoftwareDevelopmentPipeline
     public static async Task Execute()
     {
         Console.WriteLine("\n=== Sample 14: Software Development Pipeline (Code-Only Workflow) ===\n");
-        Console.WriteLine("Demonstrates: Sequential → Concurrent → Conditional → Loop-back patterns\n");
+        Console.WriteLine("Demonstrates: Sequential ? Concurrent ? Conditional ? Loop-back patterns\n");
 
         // ====================================
         // Phase 1: ANALYSIS (Sequential)
@@ -66,8 +65,8 @@ internal static class Sample14_SoftwareDevelopmentPipeline
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> gatherRequirementsFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
             {
-                var result = $"{input}\n[✓ Requirements Gathered: Feature scope defined]";
-                Console.WriteLine("  → Requirements gathering complete");
+                var result = $"{input}\n[? Requirements Gathered: Feature scope defined]";
+                Console.WriteLine("  ? Requirements gathering complete");
                 return ValueTask.FromResult(result);
             };
         var gatherRequirements = gatherRequirementsFunc.BindAsExecutor("GatherRequirements");
@@ -75,8 +74,8 @@ internal static class Sample14_SoftwareDevelopmentPipeline
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> riskAnalysisFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
             {
-                var result = $"{input}\n[✓ Risk Analysis: Low risk, no blockers identified]";
-                Console.WriteLine("  → Risk analysis complete");
+                var result = $"{input}\n[? Risk Analysis: Low risk, no blockers identified]";
+                Console.WriteLine("  ? Risk analysis complete");
                 return ValueTask.FromResult(result);
             };
         var riskAnalysis = riskAnalysisFunc.BindAsExecutor("RiskAnalysis");
@@ -84,8 +83,8 @@ internal static class Sample14_SoftwareDevelopmentPipeline
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> feasibilityCheckFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
             {
-                var result = $"{input}\n[✓ Feasibility Check: Project is feasible with current resources]";
-                Console.WriteLine("  → Feasibility check complete");
+                var result = $"{input}\n[? Feasibility Check: Project is feasible with current resources]";
+                Console.WriteLine("  ? Feasibility check complete");
                 return ValueTask.FromResult(result);
             };
         var feasibilityCheck = feasibilityCheckFunc.BindAsExecutor("FeasibilityCheck");
@@ -98,8 +97,8 @@ internal static class Sample14_SoftwareDevelopmentPipeline
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> technicalSpecsFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
             {
-                var result = $"{input}\n[✓ Technical Specs: Architecture and design patterns documented]";
-                Console.WriteLine("  → Technical specifications complete");
+                var result = $"{input}\n[? Technical Specs: Architecture and design patterns documented]";
+                Console.WriteLine("  ? Technical specifications complete");
                 return ValueTask.FromResult(result);
             };
         var technicalSpecs = technicalSpecsFunc.BindAsExecutor("TechnicalSpecs");
@@ -107,8 +106,8 @@ internal static class Sample14_SoftwareDevelopmentPipeline
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> apiDesignFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
             {
-                var result = $"{input}\n[✓ API Design: RESTful endpoints defined with OpenAPI spec]";
-                Console.WriteLine("  → API design complete");
+                var result = $"{input}\n[? API Design: RESTful endpoints defined with OpenAPI spec]";
+                Console.WriteLine("  ? API design complete");
                 return ValueTask.FromResult(result);
             };
         var apiDesign = apiDesignFunc.BindAsExecutor("APIDesign");
@@ -116,8 +115,8 @@ internal static class Sample14_SoftwareDevelopmentPipeline
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> dataModelFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
             {
-                var result = $"{input}\n[✓ Data Model: Database schema and relationships defined]";
-                Console.WriteLine("  → Data model complete");
+                var result = $"{input}\n[? Data Model: Database schema and relationships defined]";
+                Console.WriteLine("  ? Data model complete");
                 return ValueTask.FromResult(result);
             };
         var dataModel = dataModelFunc.BindAsExecutor("DataModel");
@@ -133,8 +132,8 @@ internal static class Sample14_SoftwareDevelopmentPipeline
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> securityExpertFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
             {
-                var result = "[Security Expert] ✓ PASS - No security vulnerabilities detected. Authentication and authorization properly implemented.";
-                Console.WriteLine("  → Security review complete");
+                var result = "[Security Expert] ? PASS - No security vulnerabilities detected. Authentication and authorization properly implemented.";
+                Console.WriteLine("  ? Security review complete");
                 return ValueTask.FromResult(result);
             };
         var securityExpert = securityExpertFunc.BindAsExecutor("SecurityExpert");
@@ -142,8 +141,8 @@ internal static class Sample14_SoftwareDevelopmentPipeline
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> performanceExpertFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
             {
-                var result = "[Performance Expert] ✓ PASS - Efficient algorithms chosen. Expected response time < 200ms.";
-                Console.WriteLine("  → Performance review complete");
+                var result = "[Performance Expert] ? PASS - Efficient algorithms chosen. Expected response time < 200ms.";
+                Console.WriteLine("  ? Performance review complete");
                 return ValueTask.FromResult(result);
             };
         var performanceExpert = performanceExpertFunc.BindAsExecutor("PerformanceExpert");
@@ -151,8 +150,8 @@ internal static class Sample14_SoftwareDevelopmentPipeline
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> uxExpertFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
             {
-                var result = "[UX Expert] ✓ PASS - User flows are intuitive. Accessibility standards met.";
-                Console.WriteLine("  → UX review complete");
+                var result = "[UX Expert] ? PASS - User flows are intuitive. Accessibility standards met.";
+                Console.WriteLine("  ? UX review complete");
                 return ValueTask.FromResult(result);
             };
         var uxExpert = uxExpertFunc.BindAsExecutor("UXExpert");
@@ -168,8 +167,8 @@ internal static class Sample14_SoftwareDevelopmentPipeline
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> codingFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
             {
-                var result = $"{input}\n[✓ Coding: Implementation complete with clean code practices]";
-                Console.WriteLine("  → Coding complete");
+                var result = $"{input}\n[? Coding: Implementation complete with clean code practices]";
+                Console.WriteLine("  ? Coding complete");
                 return ValueTask.FromResult(result);
             };
         var coding = codingFunc.BindAsExecutor("Coding");
@@ -177,8 +176,8 @@ internal static class Sample14_SoftwareDevelopmentPipeline
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> unitTestsFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
             {
-                var result = $"{input}\n[✓ Unit Tests: 95% code coverage achieved]";
-                Console.WriteLine("  → Unit tests complete");
+                var result = $"{input}\n[? Unit Tests: 95% code coverage achieved]";
+                Console.WriteLine("  ? Unit tests complete");
                 return ValueTask.FromResult(result);
             };
         var unitTests = unitTestsFunc.BindAsExecutor("UnitTests");
@@ -186,8 +185,8 @@ internal static class Sample14_SoftwareDevelopmentPipeline
         Func<string, IWorkflowContext, CancellationToken, ValueTask<string>> integrationTestsFunc = 
             (string input, IWorkflowContext ctx, CancellationToken ct) =>
             {
-                var result = $"{input}\n[✓ Integration Tests: All endpoints tested successfully]";
-                Console.WriteLine("  → Integration tests complete");
+                var result = $"{input}\n[? Integration Tests: All endpoints tested successfully]";
+                Console.WriteLine("  ? Integration tests complete");
                 return ValueTask.FromResult(result);
             };
         var integrationTests = integrationTestsFunc.BindAsExecutor("IntegrationTests");
@@ -203,8 +202,8 @@ internal static class Sample14_SoftwareDevelopmentPipeline
         Func<QCResult, IWorkflowContext, CancellationToken, ValueTask<string>> deployFunc = 
             (QCResult input, IWorkflowContext ctx, CancellationToken ct) =>
             {
-                var result = $"{input.Content}\n\n[🚀 DEPLOYED TO PRODUCTION]\n";
-                Console.WriteLine("  → ✅ DEPLOYED TO PRODUCTION!");
+                var result = $"{input.Content}\n\n[?? DEPLOYED TO PRODUCTION]\n";
+                Console.WriteLine("  ? ? DEPLOYED TO PRODUCTION!");
                 return ValueTask.FromResult(result);
             };
         var deployExecutor = deployFunc.BindAsExecutor("DeployToProduction");
@@ -227,7 +226,7 @@ internal static class Sample14_SoftwareDevelopmentPipeline
             // Expert Assessment (Concurrent - Fan-out/Fan-in)
             .AddEdge(dataModel, expertFanOutStart)
             .AddFanOutEdge(expertFanOutStart, targets: new[] { securityExpert, performanceExpert, uxExpert })
-            .AddFanInEdge(expertAggregator, sources: new[] { securityExpert, performanceExpert, uxExpert })
+            .AddFanInBarrierEdge(new[] { securityExpert, performanceExpert, uxExpert }, expertAggregator)
             // Implementation Phase (Sequential)
             .AddEdge(expertAggregator, coding)
             .AddEdge(coding, unitTests)
@@ -255,7 +254,7 @@ internal static class Sample14_SoftwareDevelopmentPipeline
         var projectInput = "Project: User Authentication System";
         Console.WriteLine($"Starting project: {projectInput}\n");
 
-        await using StreamingRun run = await InProcessExecution.StreamAsync(workflow, projectInput);
+        await using StreamingRun run = await InProcessExecution.RunStreamingAsync(workflow, projectInput);
         await foreach (WorkflowEvent evt in run.WatchStreamAsync().ConfigureAwait(false))
         {
             if (evt is WorkflowOutputEvent output)
@@ -271,15 +270,15 @@ internal static class Sample14_SoftwareDevelopmentPipeline
             }
         }
 
-        Console.WriteLine("\n✅ Sample 14 Complete!\n");
+        Console.WriteLine("\n? Sample 14 Complete!\n");
         Console.WriteLine("Key Concepts Demonstrated:");
-        Console.WriteLine("  ✓ Function-based executors for simple transformations");
-        Console.WriteLine("  ✓ Class-based executors for state management and complex logic");
-        Console.WriteLine("  ✓ Sequential processing (Analysis, Specification, Implementation)");
-        Console.WriteLine("  ✓ Concurrent processing (Expert reviews in parallel)");
-        Console.WriteLine("  ✓ Conditional routing (QC approval/rejection)");
-        Console.WriteLine("  ✓ Loop-back mechanism (Rejected work returns to implementation)");
-        Console.WriteLine("  ✓ Fan-out/Fan-in patterns for parallel work aggregation\n");
+        Console.WriteLine("  ? Function-based executors for simple transformations");
+        Console.WriteLine("  ? Class-based executors for state management and complex logic");
+        Console.WriteLine("  ? Sequential processing (Analysis, Specification, Implementation)");
+        Console.WriteLine("  ? Concurrent processing (Expert reviews in parallel)");
+        Console.WriteLine("  ? Conditional routing (QC approval/rejection)");
+        Console.WriteLine("  ? Loop-back mechanism (Rejected work returns to implementation)");
+        Console.WriteLine("  ? Fan-out/Fan-in patterns for parallel work aggregation\n");
     }
 }
 
@@ -290,10 +289,10 @@ internal static class Sample14_SoftwareDevelopmentPipeline
 /// <summary>
 /// Executor that fans out work to multiple expert reviewers.
 /// </summary>
-internal sealed class ExpertReviewFanOutExecutor : ReflectingExecutor<ExpertReviewFanOutExecutor>, IMessageHandler<string>
+internal sealed partial class ExpertReviewFanOutExecutor : Executor
 {
     public ExpertReviewFanOutExecutor() : base("ExpertReviewFanOut") { }
-
+    [MessageHandler]
     public async ValueTask HandleAsync(string message, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         Console.WriteLine("\n--- EXPERT ASSESSMENT PHASE (Concurrent Reviews) ---");
@@ -308,7 +307,7 @@ internal sealed class ExpertReviewFanOutExecutor : ReflectingExecutor<ExpertRevi
 /// Aggregates feedback from multiple expert reviewers.
 /// Uses class-based approach because it needs to maintain state (collected reviews).
 /// </summary>
-internal sealed class ExpertReviewAggregator : ReflectingExecutor<ExpertReviewAggregator>, IMessageHandler<string, string>
+internal sealed partial class ExpertReviewAggregator : Executor
 {
     private readonly List<string> _reviews = new();
     private readonly int _expectedCount;
@@ -317,7 +316,7 @@ internal sealed class ExpertReviewAggregator : ReflectingExecutor<ExpertReviewAg
     {
         _expectedCount = expectedCount;
     }
-
+    [MessageHandler]
     public ValueTask<string> HandleAsync(
         string message, 
         IWorkflowContext context, 
@@ -357,12 +356,12 @@ public sealed class QCResult
 /// Quality Control executor that randomly approves or rejects work.
 /// Uses class-based approach because it needs to return structured data for conditional routing.
 /// </summary>
-internal sealed class QualityControlExecutor : ReflectingExecutor<QualityControlExecutor>, IMessageHandler<string, QCResult>
+internal sealed partial class QualityControlExecutor : Executor
 {
     private static int _attemptCount = 0;
 
     public QualityControlExecutor() : base("QualityControl") { }
-
+    [MessageHandler]
     public ValueTask<QCResult> HandleAsync(string message, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         _attemptCount++;
@@ -384,14 +383,14 @@ internal sealed class QualityControlExecutor : ReflectingExecutor<QualityControl
         if (approved)
         {
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"  ✅ APPROVED: {result.Reason}");
+            Console.WriteLine($"  ? APPROVED: {result.Reason}");
             Console.ResetColor();
         }
         else
         {
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine($"  ⚠️  REJECTED: {result.Reason}");
-            Console.WriteLine("  → Looping back to implementation phase for fixes...");
+            Console.WriteLine($"  ??  REJECTED: {result.Reason}");
+            Console.WriteLine("  ? Looping back to implementation phase for fixes...");
             Console.ResetColor();
         }
 
@@ -402,16 +401,16 @@ internal sealed class QualityControlExecutor : ReflectingExecutor<QualityControl
 /// <summary>
 /// Handles rejection and loops back to implementation.
 /// </summary>
-internal sealed class RejectionLoopBackExecutor : ReflectingExecutor<RejectionLoopBackExecutor>, IMessageHandler<QCResult, string>
+internal sealed partial class RejectionLoopBackExecutor : Executor
 {
     public RejectionLoopBackExecutor() : base("RejectionLoopBack") { }
-
+    [MessageHandler]
     public ValueTask<string> HandleAsync(QCResult result, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         Console.WriteLine("\n--- REWORK REQUIRED ---");
         Console.WriteLine("Returning to implementation phase with QC feedback...\n");
         
-        var reworkContent = $"{result.Content}\n[⚠️  REWORK: {result.Reason}]";
+        var reworkContent = $"{result.Content}\n[??  REWORK: {result.Reason}]";
         return ValueTask.FromResult(reworkContent);
     }
 }

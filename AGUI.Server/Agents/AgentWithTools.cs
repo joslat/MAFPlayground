@@ -24,7 +24,7 @@ public static class AgentWithTools
             AIFunctionFactory.Create(GetCurrentTime, serializerOptions: jsonOptions.SerializerOptions)
         ];
 
-        return chatClient.CreateAIAgent(
+        return chatClient.AsAIAgent(
             name: "TravelAssistant",
             instructions: """
                 You are a helpful travel assistant with access to weather information, restaurant search, and time services.

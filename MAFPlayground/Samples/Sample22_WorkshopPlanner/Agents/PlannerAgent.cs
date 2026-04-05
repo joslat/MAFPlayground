@@ -13,9 +13,12 @@ public static class PlannerAgent
 {
     public static ChatClientAgent Create(IChatClient chatClient)
     {
-        return chatClient.CreateAIAgent(new ChatClientAgentOptions(
-            name: "WorkshopPlanner",
-            instructions: """
+        return chatClient.AsAIAgent(new ChatClientAgentOptions
+        {
+            Name = "WorkshopPlanner",
+            ChatOptions = new ChatOptions
+            {
+                Instructions = """
                 You are an expert workshop designer specializing in technical training.
                 
                 Your task is to create comprehensive, engaging workshop plans that:
@@ -26,10 +29,7 @@ public static class PlannerAgent
                 - Match the audience's skill level
                 
                 Design workshops that are both educational and engaging.
-                """)
-        {
-            ChatOptions = new()
-            {
+                """,
                 ResponseFormat = Microsoft.Extensions.AI.ChatResponseFormat.ForJsonSchema<WorkshopPlan>()
             }
         });

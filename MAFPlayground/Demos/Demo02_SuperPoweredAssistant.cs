@@ -39,7 +39,9 @@ internal static class Demo02_SuperPoweredAssistant
             new ChatClientAgentOptions
             {
                 Name = "PersonalAssistant",
-                Instructions = """
+                ChatOptions = new ChatOptions
+                {
+                    Instructions = """
                     You are Johnny, a fun, friendly and helpful personal assistant. 
                     
                     You can:
@@ -55,8 +57,6 @@ internal static class Demo02_SuperPoweredAssistant
                     Also do not just try once, if something fails, try again with different parameters - 
                     all to assist in the most perfect way, delivering solutions!!.
                     """,
-                ChatOptions = new ChatOptions
-                {
                     Tools = [
                         AIFunctionFactory.Create(SuperPoweredAssistantTools.GetCurrentDate),
                         AIFunctionFactory.Create(SuperPoweredAssistantTools.GetWeather),

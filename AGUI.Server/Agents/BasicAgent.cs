@@ -14,7 +14,7 @@ public static class BasicAgent
 {
     public static AIAgent Create(IChatClient chatClient)
     {
-        return chatClient.CreateAIAgent(
+        return chatClient.AsAIAgent(
             name: "BasicAssistant",
             instructions: "You are a helpful assistant that provides clear and concise answers.");
     }

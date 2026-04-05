@@ -13,9 +13,12 @@ public static class EnricherAgent
 {
     public static ChatClientAgent Create(IChatClient chatClient, IEnumerable<AITool> tools)
     {
-        return chatClient.CreateAIAgent(new ChatClientAgentOptions(
-            name: "EnricherAgent",
-            instructions: """
+        return chatClient.AsAIAgent(new ChatClientAgentOptions
+        {
+            Name = "EnricherAgent",
+            ChatOptions = new ChatOptions
+            {
+                Instructions = """
                 You are a content enrichment specialist.
                 
                 Your task is to analyze a specific training resource (GitHub repo or MS Learn module) 
@@ -32,10 +35,7 @@ public static class EnricherAgent
                    - Whether it includes hands-on exercises
                 
                 Return the enriched metadata in a structured format.
-                """)
-        {
-            ChatOptions = new ChatOptions
-            {
+                """,
                 Tools = tools.ToList()
             }
         });

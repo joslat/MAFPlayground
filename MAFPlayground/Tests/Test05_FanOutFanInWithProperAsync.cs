@@ -2,7 +2,6 @@
 // Copyright (c) 2025 Jose Luis
 
 using Microsoft.Agents.AI.Workflows;
-using Microsoft.Agents.AI.Workflows.Reflection;
 
 namespace MAFPlayground.Tests;
 
@@ -29,7 +28,7 @@ namespace MAFPlayground.Tests;
 /// - Test04: Class-based, context state with blocking ? FAILS (aggregator not called)
 /// - Test05: Class-based, context state with async/await ? SHOULD WORK!
 /// </summary>
-internal static class Test05_FanOutFanInWithProperAsync
+internal static partial class Test05_FanOutFanInWithProperAsync
 {
     // ?? TOGGLE FLAG: Compare blocking vs proper async
     // false = Use blocking (.GetAwaiter().GetResult()) - FAILS like Test04
@@ -78,7 +77,7 @@ internal static class Test05_FanOutFanInWithProperAsync
         Console.WriteLine("EXECUTING TEST WORKFLOW (PROPER ASYNC)");
         Console.WriteLine(new string('=', 80) + "\n");
 
-        await using StreamingRun run = await InProcessExecution.StreamAsync(workflow, "START");
+        await using StreamingRun run = await InProcessExecution.RunStreamingAsync(workflow, "START");
 
         bool receivedOutput = false;
         await foreach (WorkflowEvent evt in run.WatchStreamAsync())
@@ -140,7 +139,7 @@ internal static class Test05_FanOutFanInWithProperAsync
 
         return new WorkflowBuilder(startExecutor)
             .AddFanOutEdge(startExecutor, targets: [executorA, executorB])
-            .AddFanInEdge(aggregator, sources: [executorA, executorB])
+            .AddFanInBarrierEdge([executorA, executorB], aggregator)
             .AddEdge(aggregator, finalExecutor)
             .WithOutputFrom(finalExecutor)
             .Build();
@@ -148,12 +147,11 @@ internal static class Test05_FanOutFanInWithProperAsync
 
     // --------------------- Class-Based Executors ---------------------
 
-    private sealed class StartExecutor_ClassBased : 
-        ReflectingExecutor<StartExecutor_ClassBased>, 
-        IMessageHandler<string>
+    private sealed partial class StartExecutor_ClassBased : 
+        Executor
     {
         public StartExecutor_ClassBased() : base("StartExecutor") { }
-
+        [MessageHandler]
         public async ValueTask HandleAsync(
             string message, 
             IWorkflowContext context, 
@@ -169,13 +167,13 @@ internal static class Test05_FanOutFanInWithProperAsync
     /// Executor A - Uses PROPER ASYNC/AWAIT (THE FIX!)
     /// ? This should work correctly with fan-in!
     /// </summary>
-    private sealed class ExecutorA_ProperAsync : 
-        ReflectingExecutor<ExecutorA_ProperAsync>, 
-        IMessageHandler<string, string>
+    private sealed partial class ExecutorA_ProperAsync : 
+        Executor
     {
         public ExecutorA_ProperAsync() : base("ExecutorA") { }
 
         // ? SOLUTION: Use async/await properly!
+        [MessageHandler]
         public async ValueTask<string> HandleAsync(
             string message, 
             IWorkflowContext context, 
@@ -217,13 +215,13 @@ internal static class Test05_FanOutFanInWithProperAsync
     /// Executor B - Uses PROPER ASYNC/AWAIT (THE FIX!)
     /// ? This should work correctly with fan-in!
     /// </summary>
-    private sealed class ExecutorB_ProperAsync : 
-        ReflectingExecutor<ExecutorB_ProperAsync>, 
-        IMessageHandler<string, string>
+    private sealed partial class ExecutorB_ProperAsync : 
+        Executor
     {
         public ExecutorB_ProperAsync() : base("ExecutorB") { }
 
         // ? SOLUTION: Use async/await properly!
+        [MessageHandler]
         public async ValueTask<string> HandleAsync(
             string message, 
             IWorkflowContext context, 
@@ -261,15 +259,14 @@ internal static class Test05_FanOutFanInWithProperAsync
         }
     }
 
-    private sealed class AggregatorExecutor_ClassBased : 
-        ReflectingExecutor<AggregatorExecutor_ClassBased>, 
-        IMessageHandler<string, string>
+    private sealed partial class AggregatorExecutor_ClassBased : 
+        Executor
     {
         private readonly List<string> _messages = new();
         private const int ExpectedCount = 2;
 
         public AggregatorExecutor_ClassBased() : base("AggregatorExecutor") { }
-
+        [MessageHandler]
         public async ValueTask<string> HandleAsync(
             string message, 
             IWorkflowContext context, 
@@ -303,12 +300,11 @@ internal static class Test05_FanOutFanInWithProperAsync
         }
     }
 
-    private sealed class FinalExecutor_ClassBased : 
-        ReflectingExecutor<FinalExecutor_ClassBased>, 
-        IMessageHandler<string, string>
+    private sealed partial class FinalExecutor_ClassBased : 
+        Executor
     {
         public FinalExecutor_ClassBased() : base("FinalExecutor") { }
-
+        [MessageHandler]
         public ValueTask<string> HandleAsync(
             string message, 
             IWorkflowContext context, 

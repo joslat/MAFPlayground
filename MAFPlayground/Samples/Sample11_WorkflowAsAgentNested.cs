@@ -1,4 +1,4 @@
-﻿// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
+// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
 // Copyright (c) 2025 Jose Luis Latorre
 
 using System;
@@ -10,7 +10,6 @@ using Azure.AI.OpenAI;
 using MAFPlayground.Utils;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Workflows;
-using Microsoft.Agents.AI.Workflows.Reflection;
 using Microsoft.Extensions.AI;
 using OpenAI;
 
@@ -20,8 +19,8 @@ namespace MAFPlayground.Samples;
 /// This sample demonstrates using a workflow-as-agent as a nested sub-workflow within a larger workflow.
 ///
 /// Architecture:
-/// 1. Build a "Text Transformation Sub-Workflow" (prefix → uppercase → reverse → postfix)
-/// 2. Convert it to an agent using .AsAgent()
+/// 1. Build a "Text Transformation Sub-Workflow" (prefix ? uppercase ? reverse ? postfix)
+/// 2. Convert it to an agent using .AsAIAgent()
 /// 3. Build a "Main Workflow" that:
 ///    - Prompts for user input
 ///    - Processes it through the sub-workflow agent
@@ -77,7 +76,7 @@ internal static class Sample11_WorkflowAsAgentNested
         // ====================================
         Console.WriteLine("Converting text transformation workflow to agent...\n");
 
-        AIAgent textTransformAgent = wrappedWorkflow.AsAgent(
+        AIAgent textTransformAgent = wrappedWorkflow.AsAIAgent(
             "text-transform-agent",
             "Agent that applies prefix, uppercase, reverse, and postfix transformations to text");
 
@@ -88,11 +87,16 @@ internal static class Sample11_WorkflowAsAgentNested
 
         ChatClientAgent explanationAgent = new(
             chatClient,
-            new ChatClientAgentOptions(
-                name: "ExplanationAgent",
-                instructions: @"You are a helpful assistant that explains what transformations were applied to text.
+            new ChatClientAgentOptions
+            {
+                Name = "ExplanationAgent",
+                ChatOptions = new ChatOptions
+                {
+                    Instructions = @"You are a helpful assistant that explains what transformations were applied to text.
 Given a transformed text, describe what changes were made in a clear, friendly way.
-Be specific about prefixes, suffixes, case changes, and reversals.")
+Be specific about prefixes, suffixes, case changes, and reversals."
+                }
+            }
         );
 
         // ====================================
@@ -105,7 +109,7 @@ Be specific about prefixes, suffixes, case changes, and reversals.")
 
         var mainWorkflow = new WorkflowBuilder(inputPromptExecutor)
             .AddFanOutEdge(inputPromptExecutor, targets: [textTransformAgent])
-            .AddFanInEdge(transformBridgeExecutor, sources: [textTransformAgent])
+            .AddFanInBarrierEdge([textTransformAgent], transformBridgeExecutor)
             .AddFanOutEdge(transformBridgeExecutor, targets: [explanationAgent])
             .WithOutputFrom(explanationAgent)
             .Build();
@@ -120,7 +124,7 @@ Be specific about prefixes, suffixes, case changes, and reversals.")
         // ====================================
         // Step 5: Execute the main workflow interactively
         // ====================================
-        Console.WriteLine("\n✨ Main workflow ready! The sub-workflow has been embedded as an agent.\n");
+        Console.WriteLine("\n? Main workflow ready! The sub-workflow has been embedded as an agent.\n");
 
         while (true)
         {
@@ -138,10 +142,10 @@ Be specific about prefixes, suffixes, case changes, and reversals.")
 
             var inputMessage = new List<ChatMessage> { new(ChatRole.User, input) };
 
-            await using StreamingRun run = await InProcessExecution.StreamAsync(mainWorkflow, inputMessage);
+            await using StreamingRun run = await InProcessExecution.RunStreamingAsync(mainWorkflow, inputMessage);
             await foreach (WorkflowEvent evt in run.WatchStreamAsync().ConfigureAwait(false))
             {
-                if (evt is AgentRunUpdateEvent agentUpdate)
+                if (evt is AgentResponseUpdateEvent agentUpdate)
                 {
                     Console.Write(agentUpdate.Update.Text);
                 }
@@ -152,7 +156,7 @@ Be specific about prefixes, suffixes, case changes, and reversals.")
             }
         }
 
-        Console.WriteLine("\n✅ Sample 11 Complete: Sub-workflow agent successfully nested in main workflow!");
+        Console.WriteLine("\n? Sample 11 Complete: Sub-workflow agent successfully nested in main workflow!");
     }
 }
 
@@ -163,10 +167,10 @@ Be specific about prefixes, suffixes, case changes, and reversals.")
 /// <summary>
 /// Executor that starts the sub-workflow by extracting text from ChatMessage.
 /// </summary>
-internal sealed class SubWorkflowStartExecutor : ReflectingExecutor<SubWorkflowStartExecutor>, IMessageHandler<List<ChatMessage>, string>
+internal sealed partial class SubWorkflowStartExecutor : Executor
 {
     public SubWorkflowStartExecutor() : base("SubWorkflowStartExecutor") { }
-
+    [MessageHandler]
     public ValueTask<string> HandleAsync(List<ChatMessage> message, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         var text = message.LastOrDefault()?.Text ?? string.Empty;
@@ -179,10 +183,10 @@ internal sealed class SubWorkflowStartExecutor : ReflectingExecutor<SubWorkflowS
 /// Executor that outputs the result from the sub-workflow as a ChatMessage.
 /// Returns the ChatMessage so it flows through the workflow's output.
 /// </summary>
-internal sealed class SubWorkflowOutputExecutor : ReflectingExecutor<SubWorkflowOutputExecutor>, IMessageHandler<string, ChatMessage>
+internal sealed partial class SubWorkflowOutputExecutor : Executor
 {
     public SubWorkflowOutputExecutor() : base("SubWorkflowOutputExecutor") { }
-
+    [MessageHandler]
     public ValueTask<ChatMessage> HandleAsync(string message, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         Console.WriteLine($"[SubWorkflowOutput] Converting to ChatMessage: '{message}'");
@@ -197,7 +201,7 @@ internal sealed class SubWorkflowOutputExecutor : ReflectingExecutor<SubWorkflow
 // Text Transformation Executors
 // ====================================
 
-internal sealed class AddPrefixExecutor : ReflectingExecutor<AddPrefixExecutor>, IMessageHandler<string, string>
+internal sealed partial class AddPrefixExecutor : Executor
 {
     private readonly string _prefix;
 
@@ -205,40 +209,40 @@ internal sealed class AddPrefixExecutor : ReflectingExecutor<AddPrefixExecutor>,
     {
         _prefix = prefix;
     }
-
+    [MessageHandler]
     public ValueTask<string> HandleAsync(string message, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         var result = _prefix + message;
-        Console.WriteLine($"[AddPrefix] '{message}' → '{result}'");
+        Console.WriteLine($"[AddPrefix] '{message}' ? '{result}'");
         return ValueTask.FromResult(result);
     }
 }
 
-internal sealed class UppercaseTransformExecutor : ReflectingExecutor<UppercaseTransformExecutor>, IMessageHandler<string, string>
+internal sealed partial class UppercaseTransformExecutor : Executor
 {
     public UppercaseTransformExecutor() : base("UppercaseTransformExecutor") { }
-
+    [MessageHandler]
     public ValueTask<string> HandleAsync(string message, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         var result = message.ToUpperInvariant();
-        Console.WriteLine($"[Uppercase] '{message}' → '{result}'");
+        Console.WriteLine($"[Uppercase] '{message}' ? '{result}'");
         return ValueTask.FromResult(result);
     }
 }
 
-internal sealed class ReverseTransformExecutor : ReflectingExecutor<ReverseTransformExecutor>, IMessageHandler<string, string>
+internal sealed partial class ReverseTransformExecutor : Executor
 {
     public ReverseTransformExecutor() : base("ReverseTransformExecutor") { }
-
+    [MessageHandler]
     public ValueTask<string> HandleAsync(string message, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         var result = string.Concat(message.Reverse());
-        Console.WriteLine($"[Reverse] '{message}' → '{result}'");
+        Console.WriteLine($"[Reverse] '{message}' ? '{result}'");
         return ValueTask.FromResult(result);
     }
 }
 
-internal sealed class AddPostfixExecutor : ReflectingExecutor<AddPostfixExecutor>, IMessageHandler<string, string>
+internal sealed partial class AddPostfixExecutor : Executor
 {
     private readonly string _postfix;
 
@@ -246,11 +250,11 @@ internal sealed class AddPostfixExecutor : ReflectingExecutor<AddPostfixExecutor
     {
         _postfix = postfix;
     }
-
+    [MessageHandler]
     public ValueTask<string> HandleAsync(string message, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         var result = message + _postfix;
-        Console.WriteLine($"[AddPostfix] '{message}' → '{result}'");
+        Console.WriteLine($"[AddPostfix] '{message}' ? '{result}'");
         return ValueTask.FromResult(result);
     }
 }
@@ -262,10 +266,10 @@ internal sealed class AddPostfixExecutor : ReflectingExecutor<AddPostfixExecutor
 /// <summary>
 /// Executor that starts the main workflow by sending input to the transform agent.
 /// </summary>
-internal sealed class InputPromptExecutor : ReflectingExecutor<InputPromptExecutor>, IMessageHandler<List<ChatMessage>>
+internal sealed partial class InputPromptExecutor : Executor
 {
     public InputPromptExecutor() : base("InputPromptExecutor") { }
-
+    [MessageHandler]
     public async ValueTask HandleAsync(List<ChatMessage> message, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         var text = message.LastOrDefault()?.Text ?? string.Empty;
@@ -280,10 +284,10 @@ internal sealed class InputPromptExecutor : ReflectingExecutor<InputPromptExecut
 /// <summary>
 /// Executor that bridges the transform agent output to the explanation agent.
 /// </summary>
-internal sealed class TransformBridgeExecutor : ReflectingExecutor<TransformBridgeExecutor>, IMessageHandler<ChatMessage>
+internal sealed partial class TransformBridgeExecutor : Executor
 {
     public TransformBridgeExecutor() : base("TransformBridgeExecutor") { }
-
+    [MessageHandler]
     public async ValueTask HandleAsync(ChatMessage message, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         Console.WriteLine($"[TransformBridge] Received transformed result: '{message.Text}'");

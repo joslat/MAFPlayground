@@ -13,9 +13,12 @@ public static class EvaluatorAgent
 {
     public static ChatClientAgent Create(IChatClient chatClient)
     {
-        return chatClient.CreateAIAgent(new ChatClientAgentOptions(
-            name: "EvaluatorAgent",
-            instructions: """
+        return chatClient.AsAIAgent(new ChatClientAgentOptions
+        {
+            Name = "EvaluatorAgent",
+            ChatOptions = new ChatOptions
+            {
+                Instructions = """
                 You are a workshop content evaluator with expertise in curriculum design.
                 
                 Your task is to evaluate enriched training components against workshop requirements.
@@ -40,10 +43,7 @@ public static class EvaluatorAgent
                 - Set suggested_use to null
                 
                 Be selective - only approve components that genuinely contribute to the workshop goals.
-                """)
-        {
-            ChatOptions = new()
-            {
+                """,
                 ResponseFormat = Microsoft.Extensions.AI.ChatResponseFormat.ForJsonSchema<EvaluationResult>()
             }
         });

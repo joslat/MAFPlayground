@@ -1,11 +1,10 @@
-﻿// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
+// SPDX-License-Identifier: LicenseRef-MAFPlayground-NPU-1.0-CH
 // Copyright (c) 2025 Jose Luis Latorre
 
 using Azure.AI.OpenAI;
 using MAFPlayground.Utils;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Workflows;
-using Microsoft.Agents.AI.Workflows.Reflection;
 using Microsoft.Extensions.AI;
 using System;
 using System.Text.Json;
@@ -22,8 +21,8 @@ namespace MAFPlayground.Samples;
 /// 3. AggregationExecutor collects both responses and combines them (fan-in)
 /// 4. Quality Check Executor evaluates the aggregated response
 /// 5. Based on quality:
-///    - High quality → Approval Executor (approves and outputs)
-///    - Low quality → Rejection Executor (rejects and outputs feedback)
+///    - High quality ? Approval Executor (approves and outputs)
+///    - Low quality ? Rejection Executor (rejects and outputs feedback)
 ///
 /// This demonstrates how to combine parallel processing with decision-based routing
 /// for sophisticated workflow automation.
@@ -59,13 +58,13 @@ internal static class Sample08_ConcurrentWithConditional
         // Create quality check agent
         ChatClientAgent qualityCheckAgent = new ChatClientAgent(
             chatClient,
-            new ChatClientAgentOptions(
-                name: "QualityChecker",
-                instructions: @"You are a quality checker that evaluates the completeness and accuracy of scientific explanations.
-Determine if the response is of high quality (comprehensive, accurate, well-explained) or low quality (incomplete, vague, or inaccurate).")
+            new ChatClientAgentOptions
             {
-                ChatOptions = new()
+                Name = "QualityChecker",
+                ChatOptions = new ChatOptions
                 {
+                    Instructions = @"You are a quality checker that evaluates the completeness and accuracy of scientific explanations.
+Determine if the response is of high quality (comprehensive, accurate, well-explained) or low quality (incomplete, vague, or inaccurate).",
                     ResponseFormat = ChatResponseFormat.ForJsonSchema<QualityCheckResult>()
                 }
             }
@@ -81,7 +80,7 @@ Determine if the response is of high quality (comprehensive, accurate, well-expl
         // Build the workflow: concurrent fan-out/fan-in followed by conditional routing
         var workflow = new WorkflowBuilder(startExecutor)
             .AddFanOutEdge(startExecutor, targets: [ physicist, chemist ])
-            .AddFanInEdge(aggregationExecutor, sources: [ physicist, chemist ])
+            .AddFanInBarrierEdge([ physicist, chemist ], aggregationExecutor)
             .AddEdge(aggregationExecutor, qualityCheckExecutor)
             .AddEdge(qualityCheckExecutor, approvalExecutor, condition: GetQualityCondition(isHighQuality: true))
             .AddEdge(qualityCheckExecutor, rejectionExecutor, condition: GetQualityCondition(isHighQuality: false))
@@ -89,13 +88,13 @@ Determine if the response is of high quality (comprehensive, accurate, well-expl
             .Build();
 
         // ISSUE:Agent Output is Buffered/Delayed
-        // The workflow runs all executors asynchronously, but you only observe WorkflowOutputEvent events in your loop—which are emitted only at the end when context.YieldOutputAsync() is called by the final executors (ApprovalExecutor or RejectionExecutor).
+        // The workflow runs all executors asynchronously, but you only observe WorkflowOutputEvent events in your loop�which are emitted only at the end when context.YieldOutputAsync() is called by the final executors (ApprovalExecutor or RejectionExecutor).
         //  ChatClientAgent agents (Physicist, Chemist) generate their responses internally during the fan-out phase, but:
-        //•	Their text output isn't immediately printed to the console
-        //•	The framework buffers the agent responses as ChatMessage objects
-        //•	These messages flow through the workflow edges to the aggregator
-        //•	The aggregator collects them and passes them forward
-        //•	Only when the final executor calls context.YieldOutputAsync() does the full aggregated response(including the agent outputs) get printed
+        //�	Their text output isn't immediately printed to the console
+        //�	The framework buffers the agent responses as ChatMessage objects
+        //�	These messages flow through the workflow edges to the aggregator
+        //�	The aggregator collects them and passes them forward
+        //�	Only when the final executor calls context.YieldOutputAsync() does the full aggregated response(including the agent outputs) get printed
 
 
         // ISSUE: The executor gets a weird id instead of something that clearly references the agent.
@@ -114,7 +113,7 @@ Determine if the response is of high quality (comprehensive, accurate, well-expl
         WorkflowVisualizerTool.PrintAll(workflow, "Sample 08: Concurrent + Conditional Workflow Visualization");
 
         // Execute the workflow in streaming mode
-        await using StreamingRun run = await InProcessExecution.StreamAsync(workflow, "What is temperature?");
+        await using StreamingRun run = await InProcessExecution.RunStreamingAsync(workflow, "What is temperature?");
         await foreach (WorkflowEvent evt in run.WatchStreamAsync().ConfigureAwait(false))
         {
             if (evt is WorkflowOutputEvent output)
@@ -135,7 +134,7 @@ Determine if the response is of high quality (comprehensive, accurate, well-expl
 /// Aggregation executor that collects responses from concurrent agents and returns formatted text.
 /// IMPORTANT: This executor waits until both messages are received before returning.
 /// </summary>
-internal sealed class Sample08AggregationExecutor : ReflectingExecutor<Sample08AggregationExecutor>, IMessageHandler<ChatMessage, string>
+internal sealed partial class Sample08AggregationExecutor : Executor
 {
     public Sample08AggregationExecutor() : base("Sample08AggregationExecutor") { }
 
@@ -145,6 +144,7 @@ internal sealed class Sample08AggregationExecutor : ReflectingExecutor<Sample08A
     /// Handles incoming messages from the agents and aggregates their responses.
     /// Only returns a value when both agent responses have been received.
     /// </summary>
+    [MessageHandler]
     public async ValueTask<string> HandleAsync(ChatMessage message, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         Console.WriteLine($"[Aggregation] Received message from {message.AuthorName}:\n{message.Text}\n");
@@ -158,10 +158,10 @@ internal sealed class Sample08AggregationExecutor : ReflectingExecutor<Sample08A
             
             Console.WriteLine($"[Aggregation] Collected {this._messages.Count} responses, proceeding to quality check.");
 
-            return formattedMessages; // ✅ Return completed task
+            return formattedMessages; // ? Return completed task
         }
 
-        return default;  // ⚠️ Returns default(ValueTask<string>) - less clear intent
+        return default;  // ?? Returns default(ValueTask<string>) - less clear intent
     }
 }
 
@@ -183,7 +183,7 @@ public sealed class QualityCheckResult
 /// <summary>
 /// Executor that performs quality check on aggregated responses.
 /// </summary>
-internal sealed class QualityCheckExecutor : ReflectingExecutor<QualityCheckExecutor>, IMessageHandler<string, QualityCheckResult>
+internal sealed partial class QualityCheckExecutor : Executor
 {
     private readonly AIAgent _qualityCheckAgent;
 
@@ -191,7 +191,7 @@ internal sealed class QualityCheckExecutor : ReflectingExecutor<QualityCheckExec
     {
         this._qualityCheckAgent = qualityCheckAgent;
     }
-
+    [MessageHandler]
     public async ValueTask<QualityCheckResult> HandleAsync(string aggregatedResponse, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         // Guard against empty responses (shouldn't happen with corrected aggregator, but safe to check)
@@ -225,16 +225,16 @@ internal sealed class QualityCheckExecutor : ReflectingExecutor<QualityCheckExec
 /// <summary>
 /// Executor that approves high-quality responses.
 /// </summary>
-internal sealed class ApprovalExecutor : ReflectingExecutor<ApprovalExecutor>, IMessageHandler<QualityCheckResult>
+internal sealed partial class ApprovalExecutor : Executor
 {
     public ApprovalExecutor() : base("ApprovalExecutor") { }
-
+    [MessageHandler]
     public async ValueTask HandleAsync(QualityCheckResult result, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         if (result.IsHighQuality)
         {
             await context.YieldOutputAsync(
-                $"✅ APPROVED: Response meets quality standards.\n\nReason: {result.Reason}\n\nResponse:\n{result.AggregatedResponse}",
+                $"? APPROVED: Response meets quality standards.\n\nReason: {result.Reason}\n\nResponse:\n{result.AggregatedResponse}",
                 cancellationToken);
         }
         else
@@ -247,16 +247,16 @@ internal sealed class ApprovalExecutor : ReflectingExecutor<ApprovalExecutor>, I
 /// <summary>
 /// Executor that handles low-quality responses.
 /// </summary>
-internal sealed class RejectionExecutor : ReflectingExecutor<RejectionExecutor>, IMessageHandler<QualityCheckResult>
+internal sealed partial class RejectionExecutor : Executor
 {
     public RejectionExecutor() : base("RejectionExecutor") { }
-
+    [MessageHandler]
     public async ValueTask HandleAsync(QualityCheckResult result, IWorkflowContext context, CancellationToken cancellationToken = default)
     {
         if (!result.IsHighQuality)
         {
             await context.YieldOutputAsync(
-                $"❌ REJECTED: Response does not meet quality standards.\n\nReason: {result.Reason}\n\nResponse:\n{result.AggregatedResponse}",
+                $"? REJECTED: Response does not meet quality standards.\n\nReason: {result.Reason}\n\nResponse:\n{result.AggregatedResponse}",
                 cancellationToken);
         }
         else

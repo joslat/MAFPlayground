@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 // Modified for MAFPlayground by Jose Luis Latorre
 
@@ -32,7 +32,7 @@ public static class RecipeAgent
             AIFunctionFactory.Create(UpdateCookingDetails, serializerOptions: jsonOptions.SerializerOptions)
         ];
 
-        return chatClient.CreateAIAgent(
+        return chatClient.AsAIAgent(
             name: "RecipeAssistant",
             instructions: """
                 You are a helpful recipe assistant with expertise in cooking and nutrition.
@@ -88,7 +88,7 @@ public static class RecipeAgent
         // Get existing state or return default
         if (_stateStore.TryGetValue(threadId, out var state))
         {
-            Console.WriteLine($"  → Found existing recipe with {state.Ingredients.Count} ingredients");
+            Console.WriteLine($"  ? Found existing recipe with {state.Ingredients.Count} ingredients");
             return state;
         }
 
@@ -97,13 +97,13 @@ public static class RecipeAgent
         {
             Ingredients = new List<Ingredient>
             {
-                new("Carrots", "2 cups", "vegetable", "🥕"),
-                new("Wheat flour", "1 cup", "grain", "🌾"),
-                new("Olive oil", "2 tbsp", "oil", "🫒")
+                new("Carrots", "2 cups", "vegetable", "??"),
+                new("Wheat flour", "1 cup", "grain", "??"),
+                new("Olive oil", "2 tbsp", "oil", "??")
             },
             Instructions = new List<Instruction>
             {
-                new(1, "Preheat oven to 350°F (175°C)", 5),
+                new(1, "Preheat oven to 350�F (175�C)", 5),
                 new(2, "Mix ingredients in a bowl", 5)
             },
             DietaryPreferences = new List<string> { "vegetarian" },
@@ -112,7 +112,7 @@ public static class RecipeAgent
         };
 
         _stateStore[threadId] = defaultState;
-        Console.WriteLine($"  → Created default recipe");
+        Console.WriteLine($"  ? Created default recipe");
         return defaultState;
     }
 
@@ -129,7 +129,7 @@ public static class RecipeAgent
     {
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine($"[Tool] UpdateIngredients called for thread: {request.ThreadId}");
-        Console.WriteLine($"  → Updating to {request.Ingredients.Count} ingredients");
+        Console.WriteLine($"  ? Updating to {request.Ingredients.Count} ingredients");
         Console.ResetColor();
 
         // Get or create state
@@ -142,7 +142,7 @@ public static class RecipeAgent
         _stateStore[request.ThreadId] = state;
 
         Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine($"  ✓ Ingredients updated successfully");
+        Console.WriteLine($"  ? Ingredients updated successfully");
         Console.ResetColor();
 
         return new StateUpdateResponse
@@ -166,7 +166,7 @@ public static class RecipeAgent
     {
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine($"[Tool] UpdateInstructions called for thread: {request.ThreadId}");
-        Console.WriteLine($"  → Updating to {request.Instructions.Count} steps");
+        Console.WriteLine($"  ? Updating to {request.Instructions.Count} steps");
         Console.ResetColor();
 
         // Get or create state
@@ -179,7 +179,7 @@ public static class RecipeAgent
         _stateStore[request.ThreadId] = state;
 
         Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine($"  ✓ Instructions updated successfully");
+        Console.WriteLine($"  ? Instructions updated successfully");
         Console.ResetColor();
 
         return new StateUpdateResponse
@@ -203,7 +203,7 @@ public static class RecipeAgent
     {
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine($"[Tool] UpdateDietaryPreferences called for thread: {request.ThreadId}");
-        Console.WriteLine($"  → Setting preferences: {string.Join(", ", request.Preferences)}");
+        Console.WriteLine($"  ? Setting preferences: {string.Join(", ", request.Preferences)}");
         Console.ResetColor();
 
         // Get or create state
@@ -216,7 +216,7 @@ public static class RecipeAgent
         _stateStore[request.ThreadId] = state;
 
         Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine($"  ✓ Dietary preferences updated successfully");
+        Console.WriteLine($"  ? Dietary preferences updated successfully");
         Console.ResetColor();
 
         return new StateUpdateResponse
@@ -243,9 +243,9 @@ public static class RecipeAgent
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine($"[Tool] UpdateCookingDetails called for thread: {threadId}");
         if (cookingTimeMinutes.HasValue)
-            Console.WriteLine($"  → Cooking time: {cookingTimeMinutes.Value} minutes");
+            Console.WriteLine($"  ? Cooking time: {cookingTimeMinutes.Value} minutes");
         if (servings.HasValue)
-            Console.WriteLine($"  → Servings: {servings.Value}");
+            Console.WriteLine($"  ? Servings: {servings.Value}");
         Console.ResetColor();
 
         // Get or create state
@@ -261,7 +261,7 @@ public static class RecipeAgent
         _stateStore[threadId] = state;
 
         Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine($"  ✓ Cooking details updated successfully");
+        Console.WriteLine($"  ? Cooking details updated successfully");
         Console.ResetColor();
 
         var message = $"Updated cooking details: ";
